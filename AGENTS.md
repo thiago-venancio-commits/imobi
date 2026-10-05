@@ -16,7 +16,10 @@ Spec completa: `docs/ESPECIFICACAO.md`. Plano: `docs/PLANO.md`.
 ## As quatro regras absolutas
 
 1. O comprador **nunca** vê preço, valor de aluguel, entrada, mínimo aceitável
-   nem condição comercial (§4, §12, §35).
+   nem condição comercial (§4, §12, §35). Exceção única e deliberada: a
+   **faixa** de preço, derivada por trigger, para o filtro da busca
+   (emenda E1 da spec). Estreitar as faixas é decisão do cliente, não do
+   programador.
 2. O comprador **nunca** vê contato do proprietário (§3, §13).
 3. O proprietário **nunca** vê contato nem identidade do comprador (§3, §14).
 4. Todo contato passa pelo Master ou por corretor autorizado (§41).

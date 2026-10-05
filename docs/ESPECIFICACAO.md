@@ -409,3 +409,41 @@ SITE + BANCO DE OFERTA + BANCO DE DEMANDA + MATCHING + MASTER
 
 A estrutura deve permitir acrescentar os módulos avançados depois, sem
 reconstruir a plataforma.
+
+---
+
+# Emendas
+
+Decisões tomadas depois da spec original. Cada uma diz o que mudou e por quê,
+para que a diferença entre o documento e o sistema nunca seja acidental.
+
+## E1 — Faixa de preço na busca pública (2026-10-05)
+
+**Muda:** §4 e §12.
+
+O layout aprovado pelo cliente tem um filtro de valor na busca pública. Como
+qualquer filtro por preço é um oráculo de preço, a escolha não é "vazar ou não
+vazar", e sim qual a resolução do vazamento. Decisão de Franklin: **faixas
+fixas e largas**.
+
+- Venda: até R$ 300 mil · R$ 300–600 mil · R$ 600 mil–1 mi · acima de R$ 1 mi.
+- Locação: até R$ 2 mil · R$ 2–5 mil · R$ 5–10 mil · acima de R$ 10 mil.
+
+Continua protegido, e é o que sustenta a intermediação (§35, §47): valor
+pedido, mínimo aceitável, entrada, condições e margem de negociação. O card e a
+página do imóvel seguem com "Entre em contato para saber o valor".
+
+A faixa é coluna **derivada** do preço privado, calculada por trigger. Ninguém
+a escreve. Estreitar as faixas aumenta a resolução do oráculo e exige decisão
+explícita do cliente — `supabase/tests/0003_price_band_isolation.sql` falha se
+alguém estreitar.
+
+## E2 — Marca (2026-10-05)
+
+O produto chama-se **TSV Imóveis**. `imobi` é só o nome do repositório.
+
+## E3 — Operador único (2026-10-05)
+
+O MVP atende uma imobiliária, com um Master. A plataforma não é vendida a
+várias imobiliárias nesta fase. Isso dispensa a camada de organizações,
+assentos e planos; a estrutura permite acrescentá-la depois.

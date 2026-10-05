@@ -190,6 +190,37 @@ const mutations = [
   for each row execute function private.tg_mask_contacts('title', 'description', 'landmarks');`,
     to: "-- trigger removido pela mutação",
   },
+  // ---- 0003: faixa de preco --------------------------------------------
+  {
+    name: "faixas estreitas viram o preco",
+    trap: "o oraculo de faixa ganha resolucao e publica o valor (§4/§12)",
+    file: "0003_price_bands.sql",
+    from: "    when _price <  600000 then 'de_300k_600k'",
+    to: "    when _price <  620000 then 'de_300k_600k'",
+  },
+  {
+    name: "faixa escrevivel pelo proprietario",
+    trap: "a faixa deixa de ser derivada e sai de sincronia com o preco real",
+    file: "0003_price_bands.sql",
+    from: `grant execute on function
+  private.sale_band_of(numeric), private.rent_band_of(numeric)
+to authenticated;`,
+    to: `grant execute on function
+  private.sale_band_of(numeric), private.rent_band_of(numeric)
+to authenticated;
+grant update (sale_band, rent_band) on public.properties to authenticated;`,
+  },
+  {
+    name: "faixa nao acompanha o preco",
+    trap: "o anuncio fica numa faixa e o preco em outra",
+    file: "0003_price_bands.sql",
+    from: `create trigger property_private_price_band
+  after insert or update of price_sale, price_rent on public.property_private
+  for each row execute function private.tg_property_price_band();`,
+    to: `create trigger property_private_price_band
+  after insert on public.property_private
+  for each row execute function private.tg_property_price_band();`,
+  },
 ];
 
 const tests = testFiles();
