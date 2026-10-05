@@ -83,6 +83,113 @@ const mutations = [
     from: "create policy audit_log_select_master on public.audit_log\n  for select to authenticated\n  using ((select private.is_master()));",
     to: "create policy audit_log_select_master on public.audit_log\n  for select to authenticated\n  using (true);",
   },
+  // ---- 0002: banco de oferta -------------------------------------------
+  {
+    name: "preço na metade pública do imóvel",
+    trap: "§4/§12: o comprador lê o valor direto pelo PostgREST",
+    file: "0002_offer.sql",
+    from: "  views_count integer not null default 0,",
+    to: `  views_count integer not null default 0,
+  price_sale numeric(14,2),
+  owner_id uuid,`,
+  },
+  {
+    name: "property_private legível por qualquer autenticado",
+    trap: "§12/§35: preço, mínimo aceitável e endereço vazam para o comprador",
+    file: "0002_offer.sql",
+    from: `create policy property_private_select on public.property_private
+  for select to authenticated
+  using (owner_id = (select auth.uid()) or (select private.is_master()));`,
+    to: `create policy property_private_select on public.property_private
+  for select to authenticated
+  using (true);`,
+  },
+  {
+    name: "property_private legível por anon",
+    trap: "§12: o valor sai na página pública sem nem precisar de login",
+    file: "0002_offer.sql",
+    from: "grant select on public.property_private to authenticated;",
+    to: "grant select on public.property_private to authenticated, anon;",
+  },
+  {
+    name: "imóvel não publicado aparece na vitrine",
+    trap: "§7: anúncio sem aprovação do Master vai ao ar",
+    file: "0002_offer.sql",
+    from: "  select _status in ('publicado', 'reservado', 'em_negociacao')",
+    to: "  select true",
+  },
+  {
+    name: "dono publica o próprio imóvel",
+    trap: "§7/§15: a aprovação do Master deixa de ser obrigatória",
+    file: "0002_offer.sql",
+    from: `grant update (type, purpose, condition, in_condominium, title, description,
+  features, amenities, bedrooms, suites, bathrooms, parking_spaces,
+  total_area, built_area, land_area, condo_fee, city, state, neighborhood,
+  landmarks) on public.properties to authenticated;`,
+    to: `grant update (type, purpose, condition, in_condominium, title, description,
+  features, amenities, bedrooms, suites, bathrooms, parking_spaces,
+  total_area, built_area, land_area, condo_fee, city, state, neighborhood,
+  landmarks, status) on public.properties to authenticated;`,
+  },
+  {
+    name: "set_property_status sem checar o Master",
+    trap: "#2: qualquer autenticado publica ou vende imóvel alheio",
+    file: "0002_offer.sql",
+    from: `  if not private.is_master() then
+    raise exception 'forbidden' using errcode = '42501';
+  end if;
+
+  update public.properties
+     set status = _status,`,
+    to: `  update public.properties
+     set status = _status,`,
+  },
+  {
+    name: "coordenada pública é a exata",
+    trap: "§6: o endereço do imóvel sai no mapa público",
+    file: "0002_offer.sql",
+    from: `  angle := new.geo_seed * 2 * pi();
+  radius := 0.004;  -- ~450 m`,
+    to: `  angle := 0;
+  radius := 0;`,
+  },
+  {
+    name: "qualquer um cadastra imóvel",
+    trap: "§7/§8: some a aprovação do proprietário pelo Master",
+    file: "0002_offer.sql",
+    from: `  if not private.is_approved_owner() then
+    raise exception 'owner_not_approved' using errcode = '42501';
+  end if;`,
+    to: "",
+  },
+  {
+    name: "comissão editável pelo proprietário",
+    trap: "§47: informação interna de comissão vira campo do dono",
+    file: "0002_offer.sql",
+    from: `grant update (price_sale, price_rent, min_price, down_payment,
+  commercial_conditions, accepts_financing, accepts_trade, address,
+  street_number, complement, cep, exact_lat, exact_lng, internal_notes)
+  on public.property_private to authenticated;`,
+    to: `grant update (price_sale, price_rent, min_price, down_payment,
+  commercial_conditions, accepts_financing, accepts_trade, address,
+  street_number, complement, cep, exact_lat, exact_lng, internal_notes,
+  commission_pct) on public.property_private to authenticated;`,
+  },
+  {
+    name: "editar anúncio publicado não pede reaprovação",
+    trap: "§7: aprova-se um texto limpo e troca-se por outro com telefone",
+    file: "0002_offer.sql",
+    from: "  if private.property_is_public(old.status) and (",
+    to: "  if false and (",
+  },
+  {
+    name: "máscara desligada na descrição do anúncio",
+    trap: "§34: o telefone do dono vai ao ar no anúncio",
+    file: "0002_offer.sql",
+    from: `create trigger properties_mask before insert or update on public.properties
+  for each row execute function private.tg_mask_contacts('title', 'description', 'landmarks');`,
+    to: "-- trigger removido pela mutação",
+  },
 ];
 
 const tests = testFiles();
@@ -91,7 +198,7 @@ let blind = 0;
 for (const m of mutations) {
   let applied = false;
   const mutate = (sql, file) => {
-    if (file !== "0001_core.sql") return sql;
+    if (file !== (m.file ?? "0001_core.sql")) return sql;
     const next = sql.replace(m.from, m.to);
     if (next !== sql) applied = true;
     return next;
