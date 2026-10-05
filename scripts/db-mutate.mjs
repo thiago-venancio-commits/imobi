@@ -39,12 +39,9 @@ const mutations = [
     from: "  if not private.is_master() then\n    raise exception 'forbidden' using errcode = '42501';\n  end if;\n  update public.brokers",
     to: "  update public.brokers",
   },
-  {
-    name: "RPCs executáveis por anon",
-    trap: "#7: helper SECURITY DEFINER chamável direto pelo PostgREST",
-    from: "revoke execute on all functions in schema public from public, anon;",
-    to: "-- revoke removido pela mutação",
-  },
+  // Mutacao "RPCs executaveis por anon" (remover o revoke da 0001) APOSENTADA:
+  // a 0004 revoga o mesmo EXECUTE, entao o estado final nao muda e nao ha mais
+  // brecha para detectar. O risco passou para as mutacoes da 0004, abaixo.
   {
     name: "INSERT direto em platform_admins",
     trap: "#1: qualquer cadastro vira Master",
@@ -220,6 +217,28 @@ grant update (sale_band, rent_band) on public.properties to authenticated;`,
     to: `create trigger property_private_price_band
   after insert on public.property_private
   for each row execute function private.tg_property_price_band();`,
+  },
+  // ---- 0004: ACL de funcoes ---------------------------------------------
+  {
+    name: "migration 0004 nao revoga PUBLIC nas funcoes existentes",
+    trap: "RPC executavel por anon; so o corpo da funcao segura (defesa em profundidade perdida)",
+    file: "0004_function_acl.sql",
+    from: "revoke execute on all functions in schema public  from public, anon;",
+    to: "-- revoke removido pela mutacao",
+  },
+  {
+    name: "funcoes futuras herdam EXECUTE de PUBLIC",
+    trap: "a proxima migration que esquecer o revoke cria RPC aberta sem ninguem notar",
+    file: "0004_function_acl.sql",
+    from: "alter default privileges for role postgres revoke execute on functions from public;",
+    to: "-- default privileges removido pela mutacao",
+  },
+  {
+    name: "anon perde EXECUTE em property_is_public",
+    trap: "a vitrine publica para de listar imoveis",
+    file: "0004_function_acl.sql",
+    from: "grant execute on function private.property_is_public(public.property_status) to anon, authenticated;",
+    to: "grant execute on function private.property_is_public(public.property_status) to authenticated;",
   },
 ];
 
