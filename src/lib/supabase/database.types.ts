@@ -1,333 +1,757 @@
 /**
- * Placeholder até existir um projeto Supabase para gerar os tipos de verdade:
+ * Gerado a partir do schema real do projeto Supabase (mrpojncrgqnfieahgfbq).
+ * NÃO edite à mão. Para regenerar depois de uma migration:
  *
- *   npx supabase gen types typescript --project-id <ref> --schema public \
- *     > src/lib/supabase/database.types.ts
+ *   npx supabase gen types typescript --project-id mrpojncrgqnfieahgfbq  *     --schema public > src/lib/supabase/database.types.ts
  *
- * Mantenha este arquivo em sincronia com supabase/migrations enquanto isso.
+ * (e recoloque o bloco de atalhos no fim do arquivo)
  */
 
-export type UserStatus = "ativo" | "bloqueado";
-export type BrokerStatus = "pendente" | "autorizado" | "bloqueado" | "removido";
-export type OwnerStatus = "pendente" | "aprovado" | "bloqueado";
-export type PropertyType =
-  | "casa" | "apartamento" | "cobertura" | "lote" | "terreno" | "comercial"
-  | "sala" | "loja" | "galpao" | "sitio" | "fazenda";
-export type PropertyPurpose = "venda" | "locacao" | "venda_locacao";
-export type PropertyCondition = "novo" | "usado" | "lancamento";
-export type PropertyStatus =
-  | "aguardando_aprovacao" | "aprovado" | "publicado" | "reservado"
-  | "em_negociacao" | "vendido" | "alugado" | "pausado" | "rejeitado" | "cancelado";
-export type LocationPrecision = "bairro" | "aproximado" | "exato";
-export type MediaKind = "foto" | "video";
-export type SaleBand = "ate_300k" | "de_300k_600k" | "de_600k_1mi" | "acima_1mi";
-export type RentBand = "ate_2k" | "de_2k_5k" | "de_5k_10k" | "acima_10k";
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
-/** Colunas que o dono pode escrever em `properties`. Ver os GRANTs de 0002. */
-type PropertyOwnerWritable = {
-  type?: PropertyType;
-  purpose?: PropertyPurpose;
-  condition?: PropertyCondition;
-  in_condominium?: boolean;
-  title?: string;
-  description?: string;
-  features?: string[];
-  amenities?: string[];
-  bedrooms?: number;
-  suites?: number;
-  bathrooms?: number;
-  parking_spaces?: number;
-  total_area?: number | null;
-  built_area?: number | null;
-  land_area?: number | null;
-  condo_fee?: number | null;
-  city?: string;
-  state?: string;
-  neighborhood?: string;
-  landmarks?: string;
-};
-
-export interface Database {
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.18"
+  }
   public: {
     Tables: {
-      properties: {
-        Row: {
-          id: string;
-          code: string;
-          type: PropertyType;
-          purpose: PropertyPurpose;
-          condition: PropertyCondition;
-          in_condominium: boolean;
-          title: string;
-          description: string;
-          features: string[];
-          amenities: string[];
-          bedrooms: number;
-          suites: number;
-          bathrooms: number;
-          parking_spaces: number;
-          total_area: number | null;
-          built_area: number | null;
-          land_area: number | null;
-          condo_fee: number | null;
-          city: string;
-          state: string;
-          neighborhood: string;
-          approx_lat: number | null;
-          approx_lng: number | null;
-          location_precision: LocationPrecision;
-          landmarks: string;
-          status: PropertyStatus;
-          rejection_reason: string | null;
-          sale_band: SaleBand | null;
-          rent_band: RentBand | null;
-          published_at: string | null;
-          views_count: number;
-          created_at: string;
-          updated_at: string;
-        };
-        // Nao existe INSERT direto: o imovel nasce por create_property().
-        Insert: never;
-        Update: PropertyOwnerWritable;
-        Relationships: [];
-      };
-      property_private: {
-        Row: {
-          property_id: string;
-          owner_id: string;
-          price_sale: number | null;
-          price_rent: number | null;
-          min_price: number | null;
-          down_payment: number | null;
-          commercial_conditions: string;
-          commission_pct: number | null;
-          accepts_financing: boolean;
-          accepts_trade: boolean;
-          address: string;
-          street_number: string;
-          complement: string;
-          cep: string;
-          exact_lat: number | null;
-          exact_lng: number | null;
-          internal_notes: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: never;
-        Update: {
-          price_sale?: number | null;
-          price_rent?: number | null;
-          min_price?: number | null;
-          down_payment?: number | null;
-          commercial_conditions?: string;
-          accepts_financing?: boolean;
-          accepts_trade?: boolean;
-          address?: string;
-          street_number?: string;
-          complement?: string;
-          cep?: string;
-          exact_lat?: number | null;
-          exact_lng?: number | null;
-          internal_notes?: string;
-        };
-        Relationships: [];
-      };
-      property_media: {
-        Row: {
-          id: string;
-          property_id: string;
-          kind: MediaKind;
-          storage_path: string;
-          position: number;
-          is_cover: boolean;
-          created_at: string;
-        };
-        Insert: {
-          property_id: string;
-          kind?: MediaKind;
-          storage_path: string;
-          position?: number;
-          is_cover?: boolean;
-        };
-        Update: { position?: number; is_cover?: boolean };
-        Relationships: [];
-      };
-      property_documents: {
-        Row: {
-          id: string;
-          property_id: string;
-          label: string;
-          storage_path: string;
-          created_at: string;
-        };
-        Insert: { property_id: string; label?: string; storage_path: string };
-        Update: { label?: string };
-        Relationships: [];
-      };
-      profiles: {
-        Row: {
-          id: string;
-          full_name: string;
-          status: UserStatus;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: { id: string; full_name?: string };
-        Update: { full_name?: string };
-        Relationships: [];
-      };
-      contacts: {
-        Row: {
-          user_id: string;
-          phone: string | null;
-          whatsapp: string | null;
-          cpf_cnpj: string | null;
-          address: string | null;
-          city: string | null;
-          state: string | null;
-          cep: string | null;
-          updated_at: string;
-        };
-        Insert: {
-          user_id: string;
-          phone?: string | null;
-          whatsapp?: string | null;
-          cpf_cnpj?: string | null;
-          address?: string | null;
-          city?: string | null;
-          state?: string | null;
-          cep?: string | null;
-        };
-        Update: {
-          phone?: string | null;
-          whatsapp?: string | null;
-          cpf_cnpj?: string | null;
-          address?: string | null;
-          city?: string | null;
-          state?: string | null;
-          cep?: string | null;
-        };
-        Relationships: [];
-      };
-      brokers: {
-        Row: {
-          user_id: string;
-          creci: string | null;
-          phone: string | null;
-          bio: string | null;
-          status: BrokerStatus;
-          applied_at: string;
-          decided_at: string | null;
-          decided_by: string | null;
-          created_at: string;
-        };
-        Insert: {
-          user_id: string;
-          creci?: string | null;
-          phone?: string | null;
-          bio?: string | null;
-          status?: BrokerStatus;
-        };
-        Update: never;
-        Relationships: [];
-      };
-      owner_profiles: {
-        Row: {
-          user_id: string;
-          status: OwnerStatus;
-          decided_at: string | null;
-          decided_by: string | null;
-          created_at: string;
-        };
-        Insert: { user_id: string; status?: OwnerStatus };
-        Update: never;
-        Relationships: [];
-      };
-      platform_admins: {
-        Row: { user_id: string; created_at: string };
-        Insert: never;
-        Update: never;
-        Relationships: [];
-      };
       audit_log: {
         Row: {
-          id: number;
-          actor_id: string | null;
-          action: string;
-          target_type: string | null;
-          target_id: string | null;
-          metadata: Record<string, unknown>;
-          created_at: string;
-        };
-        Insert: never;
-        Update: never;
-        Relationships: [];
-      };
+          action: string
+          actor_id: string | null
+          created_at: string
+          id: number
+          metadata: Json
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          id?: never
+          metadata?: Json
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          id?: never
+          metadata?: Json
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
+      brokers: {
+        Row: {
+          applied_at: string
+          bio: string | null
+          created_at: string
+          creci: string | null
+          decided_at: string | null
+          decided_by: string | null
+          phone: string | null
+          status: Database["public"]["Enums"]["broker_status"]
+          user_id: string
+        }
+        Insert: {
+          applied_at?: string
+          bio?: string | null
+          created_at?: string
+          creci?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["broker_status"]
+          user_id: string
+        }
+        Update: {
+          applied_at?: string
+          bio?: string | null
+          created_at?: string
+          creci?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          phone?: string | null
+          status?: Database["public"]["Enums"]["broker_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      contacts: {
+        Row: {
+          address: string | null
+          cep: string | null
+          city: string | null
+          cpf_cnpj: string | null
+          phone: string | null
+          state: string | null
+          updated_at: string
+          user_id: string
+          whatsapp: string | null
+        }
+        Insert: {
+          address?: string | null
+          cep?: string | null
+          city?: string | null
+          cpf_cnpj?: string | null
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id: string
+          whatsapp?: string | null
+        }
+        Update: {
+          address?: string | null
+          cep?: string | null
+          city?: string | null
+          cpf_cnpj?: string | null
+          phone?: string | null
+          state?: string | null
+          updated_at?: string
+          user_id?: string
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      owner_profiles: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          status: Database["public"]["Enums"]["owner_status"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          status?: Database["public"]["Enums"]["owner_status"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          status?: Database["public"]["Enums"]["owner_status"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      platform_admins: {
+        Row: {
+          created_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          status: Database["public"]["Enums"]["user_status"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          full_name?: string
+          id: string
+          status?: Database["public"]["Enums"]["user_status"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          status?: Database["public"]["Enums"]["user_status"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      properties: {
+        Row: {
+          amenities: string[]
+          approx_lat: number | null
+          approx_lng: number | null
+          bathrooms: number
+          bedrooms: number
+          built_area: number | null
+          city: string
+          code: string
+          condition: Database["public"]["Enums"]["property_condition"]
+          condo_fee: number | null
+          created_at: string
+          description: string
+          features: string[]
+          id: string
+          in_condominium: boolean
+          land_area: number | null
+          landmarks: string
+          location_precision: Database["public"]["Enums"]["location_precision"]
+          neighborhood: string
+          parking_spaces: number
+          published_at: string | null
+          purpose: Database["public"]["Enums"]["property_purpose"]
+          rejection_reason: string | null
+          rent_band: Database["public"]["Enums"]["rent_band"] | null
+          sale_band: Database["public"]["Enums"]["sale_band"] | null
+          state: string
+          status: Database["public"]["Enums"]["property_status"]
+          suites: number
+          title: string
+          total_area: number | null
+          type: Database["public"]["Enums"]["property_type"]
+          updated_at: string
+          views_count: number
+        }
+        Insert: {
+          amenities?: string[]
+          approx_lat?: number | null
+          approx_lng?: number | null
+          bathrooms?: number
+          bedrooms?: number
+          built_area?: number | null
+          city?: string
+          code?: string
+          condition?: Database["public"]["Enums"]["property_condition"]
+          condo_fee?: number | null
+          created_at?: string
+          description?: string
+          features?: string[]
+          id?: string
+          in_condominium?: boolean
+          land_area?: number | null
+          landmarks?: string
+          location_precision?: Database["public"]["Enums"]["location_precision"]
+          neighborhood?: string
+          parking_spaces?: number
+          published_at?: string | null
+          purpose: Database["public"]["Enums"]["property_purpose"]
+          rejection_reason?: string | null
+          rent_band?: Database["public"]["Enums"]["rent_band"] | null
+          sale_band?: Database["public"]["Enums"]["sale_band"] | null
+          state?: string
+          status?: Database["public"]["Enums"]["property_status"]
+          suites?: number
+          title?: string
+          total_area?: number | null
+          type: Database["public"]["Enums"]["property_type"]
+          updated_at?: string
+          views_count?: number
+        }
+        Update: {
+          amenities?: string[]
+          approx_lat?: number | null
+          approx_lng?: number | null
+          bathrooms?: number
+          bedrooms?: number
+          built_area?: number | null
+          city?: string
+          code?: string
+          condition?: Database["public"]["Enums"]["property_condition"]
+          condo_fee?: number | null
+          created_at?: string
+          description?: string
+          features?: string[]
+          id?: string
+          in_condominium?: boolean
+          land_area?: number | null
+          landmarks?: string
+          location_precision?: Database["public"]["Enums"]["location_precision"]
+          neighborhood?: string
+          parking_spaces?: number
+          published_at?: string | null
+          purpose?: Database["public"]["Enums"]["property_purpose"]
+          rejection_reason?: string | null
+          rent_band?: Database["public"]["Enums"]["rent_band"] | null
+          sale_band?: Database["public"]["Enums"]["sale_band"] | null
+          state?: string
+          status?: Database["public"]["Enums"]["property_status"]
+          suites?: number
+          title?: string
+          total_area?: number | null
+          type?: Database["public"]["Enums"]["property_type"]
+          updated_at?: string
+          views_count?: number
+        }
+        Relationships: []
+      }
+      property_documents: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          property_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label?: string
+          property_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          property_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_media: {
+        Row: {
+          created_at: string
+          id: string
+          is_cover: boolean
+          kind: Database["public"]["Enums"]["media_kind"]
+          position: number
+          property_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_cover?: boolean
+          kind?: Database["public"]["Enums"]["media_kind"]
+          position?: number
+          property_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_cover?: boolean
+          kind?: Database["public"]["Enums"]["media_kind"]
+          position?: number
+          property_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_media_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_private: {
+        Row: {
+          accepts_financing: boolean
+          accepts_trade: boolean
+          address: string
+          cep: string
+          commercial_conditions: string
+          commission_pct: number | null
+          complement: string
+          created_at: string
+          down_payment: number | null
+          exact_lat: number | null
+          exact_lng: number | null
+          geo_seed: number
+          internal_notes: string
+          min_price: number | null
+          owner_id: string
+          price_rent: number | null
+          price_sale: number | null
+          property_id: string
+          street_number: string
+          updated_at: string
+        }
+        Insert: {
+          accepts_financing?: boolean
+          accepts_trade?: boolean
+          address?: string
+          cep?: string
+          commercial_conditions?: string
+          commission_pct?: number | null
+          complement?: string
+          created_at?: string
+          down_payment?: number | null
+          exact_lat?: number | null
+          exact_lng?: number | null
+          geo_seed?: number
+          internal_notes?: string
+          min_price?: number | null
+          owner_id: string
+          price_rent?: number | null
+          price_sale?: number | null
+          property_id: string
+          street_number?: string
+          updated_at?: string
+        }
+        Update: {
+          accepts_financing?: boolean
+          accepts_trade?: boolean
+          address?: string
+          cep?: string
+          commercial_conditions?: string
+          commission_pct?: number | null
+          complement?: string
+          created_at?: string
+          down_payment?: number | null
+          exact_lat?: number | null
+          exact_lng?: number | null
+          geo_seed?: number
+          internal_notes?: string
+          min_price?: number | null
+          owner_id?: string
+          price_rent?: number | null
+          price_sale?: number | null
+          property_id?: string
+          street_number?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_private_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: true
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_settings: {
         Row: {
-          id: boolean;
-          master_whatsapp: string;
-          master_email: string;
-          match_budget_tolerance_pct: number;
-          demand_budget_edits_per_day: number;
-          updated_at: string;
-        };
-        Insert: never;
+          demand_budget_edits_per_day: number
+          id: boolean
+          master_email: string
+          master_whatsapp: string
+          match_budget_tolerance_pct: number
+          updated_at: string
+        }
+        Insert: {
+          demand_budget_edits_per_day?: number
+          id?: boolean
+          master_email?: string
+          master_whatsapp?: string
+          match_budget_tolerance_pct?: number
+          updated_at?: string
+        }
         Update: {
-          master_whatsapp?: string;
-          master_email?: string;
-          match_budget_tolerance_pct?: number;
-          demand_budget_edits_per_day?: number;
-        };
-        Relationships: [];
-      };
-    };
-    Views: Record<never, never>;
+          demand_budget_edits_per_day?: number
+          id?: boolean
+          master_email?: string
+          master_whatsapp?: string
+          match_budget_tolerance_pct?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
     Functions: {
       create_property: {
-        Args: { _type: PropertyType; _purpose: PropertyPurpose; _title?: string };
-        Returns: string;
-      };
-      set_property_status: {
-        Args: { _property: string; _status: PropertyStatus; _reason?: string };
-        Returns: undefined;
-      };
-      set_property_location_precision: {
-        Args: { _property: string; _precision: LocationPrecision };
-        Returns: undefined;
-      };
-      set_property_commission: { Args: { _property: string; _pct: number }; Returns: undefined };
-      submit_property: { Args: { _property: string }; Returns: undefined };
-      register_property_view: { Args: { _property: string }; Returns: undefined };
-      is_master: { Args: Record<string, never>; Returns: boolean };
-      is_active_broker: { Args: Record<string, never>; Returns: boolean };
+        Args: {
+          _purpose: Database["public"]["Enums"]["property_purpose"]
+          _title?: string
+          _type: Database["public"]["Enums"]["property_type"]
+        }
+        Returns: string
+      }
+      is_active_broker: { Args: never; Returns: boolean }
+      is_master: { Args: never; Returns: boolean }
       my_roles: {
-        Args: Record<string, never>;
+        Args: never
         Returns: {
-          is_master: boolean;
-          is_broker: boolean;
-          is_owner: boolean;
-          broker_status: BrokerStatus | null;
-          owner_status: OwnerStatus | null;
-        }[];
-      };
-      set_broker_status: { Args: { _user: string; _status: BrokerStatus }; Returns: undefined };
-      set_owner_status: { Args: { _user: string; _status: OwnerStatus }; Returns: undefined };
-      set_user_status: { Args: { _user: string; _status: UserStatus }; Returns: undefined };
-    };
+          broker_status: Database["public"]["Enums"]["broker_status"]
+          is_broker: boolean
+          is_master: boolean
+          is_owner: boolean
+          owner_status: Database["public"]["Enums"]["owner_status"]
+        }[]
+      }
+      register_property_view: {
+        Args: { _property: string }
+        Returns: undefined
+      }
+      set_broker_status: {
+        Args: {
+          _status: Database["public"]["Enums"]["broker_status"]
+          _user: string
+        }
+        Returns: undefined
+      }
+      set_owner_status: {
+        Args: {
+          _status: Database["public"]["Enums"]["owner_status"]
+          _user: string
+        }
+        Returns: undefined
+      }
+      set_property_commission: {
+        Args: { _pct: number; _property: string }
+        Returns: undefined
+      }
+      set_property_location_precision: {
+        Args: {
+          _precision: Database["public"]["Enums"]["location_precision"]
+          _property: string
+        }
+        Returns: undefined
+      }
+      set_property_status: {
+        Args: {
+          _property: string
+          _reason?: string
+          _status: Database["public"]["Enums"]["property_status"]
+        }
+        Returns: undefined
+      }
+      set_user_status: {
+        Args: {
+          _status: Database["public"]["Enums"]["user_status"]
+          _user: string
+        }
+        Returns: undefined
+      }
+      submit_property: { Args: { _property: string }; Returns: undefined }
+    }
     Enums: {
-      user_status: UserStatus;
-      property_type: PropertyType;
-      property_purpose: PropertyPurpose;
-      property_condition: PropertyCondition;
-      property_status: PropertyStatus;
-      location_precision: LocationPrecision;
-      media_kind: MediaKind;
-      sale_band: SaleBand;
-      rent_band: RentBand;
-      broker_status: BrokerStatus;
-      owner_status: OwnerStatus;
-    };
-    CompositeTypes: Record<never, never>;
-  };
+      broker_status: "pendente" | "autorizado" | "bloqueado" | "removido"
+      location_precision: "bairro" | "aproximado" | "exato"
+      media_kind: "foto" | "video"
+      owner_status: "pendente" | "aprovado" | "bloqueado"
+      property_condition: "novo" | "usado" | "lancamento"
+      property_purpose: "venda" | "locacao" | "venda_locacao"
+      property_status:
+        | "aguardando_aprovacao"
+        | "aprovado"
+        | "publicado"
+        | "reservado"
+        | "em_negociacao"
+        | "vendido"
+        | "alugado"
+        | "pausado"
+        | "rejeitado"
+        | "cancelado"
+      property_type:
+        | "casa"
+        | "apartamento"
+        | "cobertura"
+        | "lote"
+        | "terreno"
+        | "comercial"
+        | "sala"
+        | "loja"
+        | "galpao"
+        | "sitio"
+        | "fazenda"
+      rent_band: "ate_2k" | "de_2k_5k" | "de_5k_10k" | "acima_10k"
+      sale_band: "ate_300k" | "de_300k_600k" | "de_600k_1mi" | "acima_1mi"
+      user_status: "ativo" | "bloqueado"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
 }
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never) = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never) = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never) = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      broker_status: ["pendente", "autorizado", "bloqueado", "removido"],
+      location_precision: ["bairro", "aproximado", "exato"],
+      media_kind: ["foto", "video"],
+      owner_status: ["pendente", "aprovado", "bloqueado"],
+      property_condition: ["novo", "usado", "lancamento"],
+      property_purpose: ["venda", "locacao", "venda_locacao"],
+      property_status: [
+        "aguardando_aprovacao",
+        "aprovado",
+        "publicado",
+        "reservado",
+        "em_negociacao",
+        "vendido",
+        "alugado",
+        "pausado",
+        "rejeitado",
+        "cancelado",
+      ],
+      property_type: [
+        "casa",
+        "apartamento",
+        "cobertura",
+        "lote",
+        "terreno",
+        "comercial",
+        "sala",
+        "loja",
+        "galpao",
+        "sitio",
+        "fazenda",
+      ],
+      rent_band: ["ate_2k", "de_2k_5k", "de_5k_10k", "acima_10k"],
+      sale_band: ["ate_300k", "de_300k_600k", "de_600k_1mi", "acima_1mi"],
+      user_status: ["ativo", "bloqueado"],
+    },
+  },
+} as const
+
+
+// --- Atalhos usados pelo app -----------------------------------------------
+// Os enums do banco são a fonte da verdade: se alguém acrescentar um status de
+// imóvel na migration e esquecer da interface, o TypeScript aponta.
+
+export type UserStatus = Database["public"]["Enums"]["user_status"];
+export type BrokerStatus = Database["public"]["Enums"]["broker_status"];
+export type OwnerStatus = Database["public"]["Enums"]["owner_status"];
+export type PropertyType = Database["public"]["Enums"]["property_type"];
+export type PropertyPurpose = Database["public"]["Enums"]["property_purpose"];
+export type PropertyCondition = Database["public"]["Enums"]["property_condition"];
+export type PropertyStatus = Database["public"]["Enums"]["property_status"];
+export type LocationPrecision = Database["public"]["Enums"]["location_precision"];
+export type MediaKind = Database["public"]["Enums"]["media_kind"];
+export type SaleBand = Database["public"]["Enums"]["sale_band"];
+export type RentBand = Database["public"]["Enums"]["rent_band"];

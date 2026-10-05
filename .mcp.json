@@ -1,0 +1,16 @@
+{
+  "_comment": "Uma conta e um conector nomeado por projeto. supabase-imobi está preso ao project_ref mrpojncrgqnfieahgfbq, então as ferramentas não alcançam outro projeto. O token vem do ambiente (SUPABASE_ACCESS_TOKEN_IMOBI, criado com setx), nunca do código. Não autentique os conectores de conta inteira ('claude.ai Supabase', 'plugin:vercel'): eles enxergam todos os projetos.",
+  "mcpServers": {
+    "supabase-imobi": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=mrpojncrgqnfieahgfbq",
+      "headers": {
+        "Authorization": "Bearer ${SUPABASE_ACCESS_TOKEN_IMOBI}"
+      }
+    },
+    "vercel-imobi": {
+      "type": "http",
+      "url": "https://mcp.vercel.com"
+    }
+  }
+}
