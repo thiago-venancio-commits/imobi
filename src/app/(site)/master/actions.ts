@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import type { ActionState } from "@/lib/auth/schemas";
 import { getCaller } from "@/lib/server/caller";
+import { setCover } from "@/lib/server/media";
 import type { LocationPrecision, OwnerStatus, PropertyStatus } from "@/lib/supabase/database.types";
 
 /**
@@ -78,6 +79,13 @@ export async function setPropertyStatusAction(
 
   refreshProperty(propertyId);
   return { message: "Status atualizado." };
+}
+
+export async function setCoverAsMasterAction(propertyId: string, mediaId: string): Promise<void> {
+  if (!uuid.safeParse(propertyId).success || !uuid.safeParse(mediaId).success) return;
+  const caller = await master();
+  await setCover(caller.supabase, propertyId, mediaId);
+  refreshProperty(propertyId);
 }
 
 export async function setLocationPrecisionAction(propertyId: string, formData: FormData): Promise<void> {

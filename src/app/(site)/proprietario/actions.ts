@@ -15,6 +15,7 @@ import {
 } from "@/lib/owner/schemas";
 import { getCaller } from "@/lib/server/caller";
 import { geocodeAddress } from "@/lib/server/geocode";
+import { setCover } from "@/lib/server/media";
 import type { PropertyPurpose, PropertyType } from "@/lib/supabase/database.types";
 
 /**
@@ -391,18 +392,7 @@ export async function removeMediaAction(propertyId: string, mediaId: string): Pr
 export async function setCoverAction(propertyId: string, mediaId: string): Promise<void> {
   if (!uuid.safeParse(propertyId).success || !uuid.safeParse(mediaId).success) return;
   const caller = await signedIn();
-  // Índice único de uma capa por imóvel: tira a atual antes de marcar a nova.
-  await caller.supabase
-    .from("property_media")
-    .update({ is_cover: false })
-    .eq("property_id", propertyId)
-    .eq("is_cover", true);
-  await caller.supabase
-    .from("property_media")
-    .update({ is_cover: true })
-    .eq("id", mediaId)
-    .eq("property_id", propertyId)
-    .eq("kind", "foto");
+  await setCover(caller.supabase, propertyId, mediaId);
   refresh(propertyId);
 }
 

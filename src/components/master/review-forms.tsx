@@ -36,7 +36,7 @@ export function StatusPanel({
           <form action={action}>
             <input type="hidden" name="status" value="publicado" />
             <SaveButton className="h-10 w-full" pending="Publicando...">
-              Aprovar e publicar
+              {status === "em_negociacao" || status === "reservado" ? "Voltar a disponível" : "Aprovar e publicar"}
             </SaveButton>
           </form>
         ) : (

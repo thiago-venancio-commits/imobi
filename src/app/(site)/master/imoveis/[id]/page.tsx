@@ -3,7 +3,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { setLocationPrecisionAction } from "@/app/(site)/master/actions";
+import { Star } from "lucide-react";
+
+import { setCoverAsMasterAction, setLocationPrecisionAction } from "@/app/(site)/master/actions";
 import { LocationCheck } from "@/components/master/location-check";
 import { CommissionForm, StatusPanel } from "@/components/master/review-forms";
 import { formatDate, formatPhone } from "@/components/master/status-tabs";
@@ -91,6 +93,13 @@ export default async function MasterPropertyPage({ params }: PageProps<"/master/
                     )}
                     {m.is_cover ? (
                       <span className="absolute left-2 top-2 rounded-md bg-brand-500 px-2 py-0.5 text-xs text-white">Capa</span>
+                    ) : m.kind === "foto" ? (
+                      <form action={setCoverAsMasterAction.bind(null, p.id, m.id)} className="absolute bottom-2 left-2">
+                        <Button type="submit" size="sm" variant="secondary" className="h-7 gap-1 text-xs shadow">
+                          <Star className="size-3.5" aria-hidden />
+                          Usar como capa
+                        </Button>
+                      </form>
                     ) : null}
                   </li>
                 ))}

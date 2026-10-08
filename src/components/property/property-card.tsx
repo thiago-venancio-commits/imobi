@@ -2,6 +2,7 @@ import { Bath, BedDouble, Car, Mail, Maximize } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { MarketBadge } from "@/components/property/market-badge";
 import { Badge } from "@/components/ui/badge";
 import { area, bandLabel, type PublicProperty, typeLabel } from "@/lib/properties";
 import { cn } from "@/lib/utils";
@@ -45,6 +46,7 @@ export function PropertyCard({ property, coverUrl }: { property: PublicProperty;
           >
             {isRent ? "Aluguel" : "Venda"}
           </Badge>
+          <MarketBadge status={property.status} className="absolute right-3 top-3" />
         </div>
 
         <div className="p-4">

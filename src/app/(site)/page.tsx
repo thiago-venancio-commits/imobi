@@ -67,6 +67,7 @@ export default async function HomePage() {
               <Button
                 size="lg"
                 className="mt-5 h-12 w-full"
+                nativeButton={false}
                 render={<Link href="/procuro-imovel" />}
               >
                 Quero cadastrar meu interesse

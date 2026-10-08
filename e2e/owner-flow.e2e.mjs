@@ -105,6 +105,12 @@ async function session(user) {
   const ctx = await browser.newContext({ locale: "pt-BR" });
   const page = await ctx.newPage();
   page.setDefaultTimeout(45000);
+  // Erros do navegador (inclusive os que o overlay de dev do Next mostra como
+  // "Issue") entram no relatório final.
+  page.on("pageerror", (e) => consoleErrors.push(`${page.url()} :: ${e.message}`));
+  page.on("console", (m) => {
+    if (m.type() === "error") consoleErrors.push(`${page.url()} :: ${m.text()}`);
+  });
   if (user) {
     // Login por link de uso único gerado pela API admin, aberto na tela de
     // confirmação do próprio site. O formulário de senha tem Turnstile, que um
@@ -120,6 +126,7 @@ async function session(user) {
 }
 
 const latin1 = (buf) => Buffer.from(buf).toString("latin1");
+const consoleErrors = [];
 
 try {
   users.owner = await makeUser("owner");
@@ -193,14 +200,18 @@ try {
     });
     const plain = Buffer.from(dataUrl.split(",")[1], "base64");
     const withGps = Buffer.concat([plain.subarray(0, 2), exifGpsSegment(GPS), plain.subarray(2)]);
-    await page.setInputFiles("[data-testid=media-input]", { name: "sala.jpg", mimeType: "image/jpeg", buffer: withGps });
-    await page.waitForSelector("#fotos img", { timeout: 60000 });
-    check("foto enviada aparece na galeria", true);
+    await page.setInputFiles("[data-testid=media-input]", [
+      { name: "sala.jpg", mimeType: "image/jpeg", buffer: withGps },
+      { name: "quarto.jpg", mimeType: "image/jpeg", buffer: plain },
+    ]);
+    await page.waitForFunction(() => document.querySelectorAll("#fotos li img").length === 2, null, { timeout: 90000 });
+    check("as duas fotos aparecem na galeria", true);
 
     const { data: media } = await admin
       .from("property_media")
       .select("storage_path, property_media_originals(storage_path)")
-      .eq("property_id", propertyId);
+      .eq("property_id", propertyId)
+      .order("position");
     const pub = media?.[0]?.storage_path;
     const orig = media?.[0]?.property_media_originals?.[0]?.storage_path;
     check("foto registrada com original separado", Boolean(pub && orig && orig.startsWith(`${propertyId}/originais/`)), JSON.stringify(media));
@@ -265,6 +276,25 @@ try {
     await page.click("text=Aprovar e publicar");
     await page.waitForSelector("text=Status atualizado");
     check("Master publica o imóvel", true);
+
+    // Master troca a capa para a segunda foto.
+    const before = await admin.from("property_media").select("id, is_cover").eq("property_id", propertyId).order("position");
+    await Promise.all([page.waitForLoadState("load"), page.click("button:has-text('Usar como capa')")]);
+    await page.waitForFunction(() => !document.querySelector("button[type=submit][disabled]"));
+    await page.waitForTimeout(1500);
+    const after = await admin.from("property_media").select("id, is_cover").eq("property_id", propertyId).order("position");
+    check(
+      "Master troca a foto de capa",
+      before.data?.[0]?.is_cover === true && after.data?.[1]?.is_cover === true && after.data?.[0]?.is_cover === false,
+      JSON.stringify(after.data),
+    );
+    const { data: still } = await admin.from("properties").select("status").eq("id", propertyId).single();
+    check("trocar a capa não tira o anúncio do ar", still.status === "publicado", still.status);
+
+    // "Em negociação" vira selo no anúncio.
+    await page.selectOption("#status-other", "em_negociacao");
+    await page.click("form:has(#status-other) button[type=submit]");
+    await page.waitForSelector("text=Status atualizado");
   }
 
   // 8. Público -----------------------------------------------------------------
@@ -272,6 +302,8 @@ try {
     const { ctx, page } = await session(null);
     await page.goto(`${BASE}/imoveis`);
     check("anúncio aparece na listagem", (await page.textContent("body")).includes(TITLE));
+    const card = page.locator(`article:has-text("${TITLE}")`);
+    check("card mostra o selo Em negociação", (await card.textContent()).includes("Em negociação"));
 
     const html = await (await fetch(`${BASE}/imoveis/${prop.code}`)).text();
     const rsc = await (await fetch(`${BASE}/imoveis/${prop.code}`, { headers: { RSC: "1" } })).text();
@@ -281,6 +313,9 @@ try {
       check(`${label}: sem caminho de original`, !text.includes("/originais/"));
     }
     check("página mostra valor sob consulta", html.includes("Sob consulta"));
+    check("página mostra o selo e o aviso de negociação", html.includes("Em negociação") && html.includes("já está em negociação"));
+    const { data: cover } = await admin.from("property_media").select("storage_path").eq("property_id", propertyId).eq("is_cover", true).single();
+    check("prévia do WhatsApp usa a capa nova", html.includes(cover.storage_path), cover.storage_path);
     check("página mostra a faixa de preço", html.includes("R$ 600 mil a R$ 1 milhão"));
     check("prévia do WhatsApp tem a foto de capa", /property="og:image" content="[^"]*property-media/.test(html));
 
@@ -308,6 +343,8 @@ try {
   }
   for (const u of Object.values(users)) await admin.auth.admin.deleteUser(u.id);
   await browser.close();
+  const unique = [...new Set(consoleErrors)];
+  if (unique.length) console.log(`\nErros no console do navegador (${unique.length}):\n  ${unique.join("\n  ")}`);
   console.log(`\n${pass} ok, ${fail} falhando`);
   process.exitCode = fail ? 1 : 0;
 }

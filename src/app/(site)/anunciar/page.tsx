@@ -69,10 +69,10 @@ export default async function AnnouncePage() {
               Crie uma conta gratuita ou entre na sua. Depois de confirmar o e-mail, volte para esta página.
             </p>
             <div className="mt-5 grid gap-3">
-              <Button size="lg" className="h-11" render={<Link href="/cadastro?next=/anunciar" />}>
+              <Button size="lg" className="h-11" nativeButton={false} render={<Link href="/cadastro?next=/anunciar" />}>
                 Criar conta
               </Button>
-              <Button size="lg" variant="outline" className="h-11" render={<Link href="/entrar?next=/anunciar" />}>
+              <Button size="lg" variant="outline" className="h-11" nativeButton={false} render={<Link href="/entrar?next=/anunciar" />}>
                 Já tenho conta
               </Button>
             </div>

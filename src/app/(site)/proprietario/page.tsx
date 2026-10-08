@@ -31,7 +31,7 @@ export default async function OwnerHomePage() {
             Acompanhe o status de cada anúncio. A equipe avisa quando houver interessados.
           </p>
         </div>
-        <Button className="h-10 gap-2" render={<Link href="/proprietario/imoveis/novo" />}>
+        <Button className="h-10 gap-2" nativeButton={false} render={<Link href="/proprietario/imoveis/novo" />}>
           <Plus className="size-4" aria-hidden />
           Cadastrar imóvel
         </Button>

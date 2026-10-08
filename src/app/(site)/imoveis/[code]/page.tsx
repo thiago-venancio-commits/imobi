@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { after } from "next/server";
 import { cache } from "react";
 
+import { MarketBadge } from "@/components/property/market-badge";
 import { Button } from "@/components/ui/button";
 import { area, bandLabel, formatBRL, PROPERTY_CONDITIONS, purposeLabel, typeLabel } from "@/lib/properties";
 import { createAnonClient } from "@/lib/supabase/server";
@@ -137,6 +138,7 @@ export default async function PropertyPage({ params }: PageProps<"/imoveis/[code
               {PROPERTY_CONDITIONS.find((c) => c.value === p.condition)?.label}
               {p.in_condominium ? " · em condomínio" : ""}
             </p>
+            <MarketBadge status={p.status} className="mt-2" />
             <h1 className="mt-1 text-3xl font-extrabold tracking-tight">{p.title || typeLabel(p.type)}</h1>
             {where ? (
               <p className="mt-2 flex items-center gap-1.5 text-muted-foreground">
@@ -212,6 +214,12 @@ export default async function PropertyPage({ params }: PageProps<"/imoveis/[code
           {p.condo_fee ? (
             <p className="mt-1 text-sm text-muted-foreground">Condomínio: {formatBRL(p.condo_fee)}/mês</p>
           ) : null}
+          {p.status === "em_negociacao" || p.status === "reservado" ? (
+            <p className="mt-4 rounded-lg bg-amber-100 px-3 py-2 text-sm text-amber-950">
+              <strong>{p.status === "reservado" ? "Este imóvel está reservado." : "Este imóvel já está em negociação."}</strong>{" "}
+              Demonstre interesse agora: se o negócio não se fechar, você é o próximo a ser chamado.
+            </p>
+          ) : null}
           <p className="mt-4 flex items-start gap-2 text-sm text-muted-foreground">
             <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />
             Tenha acesso às condições comerciais falando com a nossa equipe. Atendimento sem compromisso.
@@ -220,6 +228,7 @@ export default async function PropertyPage({ params }: PageProps<"/imoveis/[code
             <Button
               size="lg"
               className="mt-5 h-12 w-full gap-2 text-base font-bold"
+              nativeButton={false}
               render={<a href={interestHref} target="_blank" rel="noreferrer" />}
             >
               <MessageCircle className="size-5" aria-hidden />
