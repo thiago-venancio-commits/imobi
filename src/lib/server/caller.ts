@@ -1,5 +1,8 @@
 import "server-only";
 
+import { cache } from "react";
+
+import type { BrokerStatus, OwnerStatus } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -18,7 +21,12 @@ export interface Caller {
   email: string;
   emailConfirmed: boolean;
   isMaster: boolean;
+  /** Corretor AUTORIZADO. Candidato pendente ou bloqueado não conta. */
   isBroker: boolean;
+  /** Proprietário APROVADO pelo Master. */
+  isOwner: boolean;
+  brokerStatus: BrokerStatus | null;
+  ownerStatus: OwnerStatus | null;
   supabase: Awaited<ReturnType<typeof createClient>>;
 }
 
@@ -32,8 +40,14 @@ export class HttpError extends Error {
   }
 }
 
-/** Resolves the caller, or null when nobody is signed in. */
-export async function getCaller(): Promise<Caller | null> {
+/**
+ * Resolves the caller, or null when nobody is signed in.
+ *
+ * Memoizado por requisição (`cache` do React): o layout e a página chamam isto
+ * e só a primeira vai ao Auth e ao banco. Não vaza entre requisições, porque o
+ * cache do React vive só durante uma renderização no servidor.
+ */
+export const getCaller = cache(async (): Promise<Caller | null> => {
   const supabase = await createClient();
 
   // getUser() revalidates the JWT with Auth. getSession() only reads the
@@ -43,20 +57,23 @@ export async function getCaller(): Promise<Caller | null> {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [{ data: isMaster }, { data: isBroker }] = await Promise.all([
-    supabase.rpc("is_master"),
-    supabase.rpc("is_active_broker"),
-  ]);
+  // Uma ida ao banco para todos os papéis. my_roles() só responde sobre quem
+  // chama (usa auth.uid() por dentro), então não há parâmetro para forjar.
+  const { data } = await supabase.rpc("my_roles");
+  const roles = data?.[0];
 
   return {
     userId: user.id,
     email: user.email ?? "",
     emailConfirmed: Boolean(user.email_confirmed_at),
-    isMaster: isMaster === true,
-    isBroker: isBroker === true,
+    isMaster: roles?.is_master === true,
+    isBroker: roles?.is_broker === true,
+    isOwner: roles?.is_owner === true,
+    brokerStatus: roles?.broker_status ?? null,
+    ownerStatus: roles?.owner_status ?? null,
     supabase,
   };
-}
+});
 
 /** Caller must be signed in. */
 export async function requireCaller(): Promise<Caller> {

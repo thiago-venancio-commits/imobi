@@ -61,3 +61,6 @@ npm run verify     # typecheck + lint + db:test + db:mutate
   conserte o teste, não a mutação.
 - Toda regra nova de privacidade entra como verificação em
   `supabase/tests/` **e** como mutação em `scripts/db-mutate.mjs`.
+- `npm run e2e:auth` testa login, cadastro, links de e-mail e redirecionamentos
+  num Chrome real contra o servidor rodando. Precisa de `E2E_EMAIL` e
+  `E2E_PASSWORD` de um usuário de teste já confirmado.

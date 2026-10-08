@@ -1,6 +1,7 @@
-import { Heart, UserRound } from "lucide-react";
+import { Heart } from "lucide-react";
 import Link from "next/link";
 
+import { AccountLink } from "@/components/site/account-link";
 import { Logo } from "@/components/site/logo";
 
 const NAV = [
@@ -37,13 +38,7 @@ export function SiteHeader() {
             <Heart className="size-4" aria-hidden />
             Favoritos
           </Link>
-          <Link
-            href="/entrar"
-            className="flex items-center gap-2 text-sm font-medium text-white/80 transition-colors hover:text-white"
-          >
-            <UserRound className="size-4" aria-hidden />
-            Entrar / Cadastrar
-          </Link>
+          <AccountLink />
         </div>
       </div>
 

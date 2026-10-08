@@ -10,7 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "db:test": "node scripts/db-test.mjs",
     "db:mutate": "node scripts/db-mutate.mjs",
-    "verify": "npm run typecheck && npm run lint && npm run db:test && npm run db:mutate"
+    "verify": "npm run typecheck && npm run lint && npm run db:test && npm run db:mutate",
+    "e2e:auth": "node e2e/auth.e2e.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -39,6 +40,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
+    "playwright-core": "^1.64.0",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

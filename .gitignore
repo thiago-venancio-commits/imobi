@@ -46,3 +46,6 @@ next-env.d.ts
 # never commit credential dumps
 *credentials*.txt
 *access*.txt
+
+# screenshots dos testes e2e
+/e2e/shots/
