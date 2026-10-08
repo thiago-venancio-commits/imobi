@@ -69,4 +69,7 @@ npm run verify     # typecheck + lint + db:test + db:mutate
 - `npm run e2e:owner` percorre o M2 inteiro (candidatura, cadastro com CEP e
   foto com GPS, aprovação do Master, anúncio público sem preço nem endereço).
   Lê `.env.local`, cria um proprietário e um Master descartáveis pela API
-  admin e apaga tudo no fim.
+  admin e apaga tudo no fim. **Atenção:** enquanto não houver um projeto
+  Supabase só de testes, o `.env.local` aponta para PRODUÇÃO e o imóvel de
+  teste fica ~1 minuto no site público. Por isso o script recusa rodar sem
+  `E2E_ALLOW_LIVE_DB=1`.

@@ -23,6 +23,18 @@ if (!URL_ || !SERVICE) {
   console.error("Faltam NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY (rode com --env-file=.env.local).");
   process.exit(2);
 }
+// Este roteiro PUBLICA um imóvel de teste no banco apontado pelo .env.local.
+// Hoje esse banco é o de produção: durante a execução (cerca de um minuto) o
+// imóvel aparece em www.tsvimoveis.com.br — foi o que aconteceu em 2026-10-08.
+// Por isso ele só roda com confirmação explícita, até existir um projeto
+// Supabase separado para testes.
+if (process.env.E2E_ALLOW_LIVE_DB !== "1") {
+  console.error(
+    "Recusado: este teste publica um imóvel por ~1 minuto no banco do .env.local (hoje, PRODUÇÃO).\n" +
+      "Rode contra um projeto de testes, ou confirme com E2E_ALLOW_LIVE_DB=1.",
+  );
+  process.exit(2);
+}
 const SHOTS = new URL("./shots/", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
 mkdirSync(SHOTS, { recursive: true });
 
