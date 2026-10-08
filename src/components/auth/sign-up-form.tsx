@@ -5,6 +5,7 @@ import { useActionState } from "react";
 
 import { signUpAction } from "@/app/(auth)/actions";
 import { Field, FormNotice, SubmitButton } from "@/components/auth/form-parts";
+import { Turnstile } from "@/components/auth/turnstile";
 import type { ActionState } from "@/lib/auth/schemas";
 
 export function SignUpForm() {
@@ -63,6 +64,7 @@ export function SignUpForm() {
         {termsError ? <p className="text-xs font-medium text-destructive">{termsError}</p> : null}
       </div>
 
+      <Turnstile action="signup" resetKey={state} />
       <SubmitButton pending="Criando conta...">Criar conta</SubmitButton>
     </form>
   );

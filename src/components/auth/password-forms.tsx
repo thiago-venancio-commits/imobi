@@ -9,6 +9,7 @@ import {
   verifyEmailLinkAction,
 } from "@/app/(auth)/actions";
 import { Field, FormNotice, SubmitButton } from "@/components/auth/form-parts";
+import { Turnstile } from "@/components/auth/turnstile";
 import type { ActionState } from "@/lib/auth/schemas";
 
 export function RequestResetForm() {
@@ -29,6 +30,7 @@ export function RequestResetForm() {
     <form action={action} className="space-y-4" noValidate>
       <FormNotice state={state} />
       <Field name="email" label="E-mail da sua conta" type="email" autoComplete="email" state={state} />
+      <Turnstile action="reset" resetKey={state} />
       <SubmitButton pending="Enviando...">Enviar link</SubmitButton>
     </form>
   );

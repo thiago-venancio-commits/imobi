@@ -5,6 +5,7 @@ import { useActionState } from "react";
 
 import { signInAction } from "@/app/(auth)/actions";
 import { Field, FormNotice, SubmitButton } from "@/components/auth/form-parts";
+import { Turnstile } from "@/components/auth/turnstile";
 import type { ActionState } from "@/lib/auth/schemas";
 
 export function SignInForm({ next }: { next?: string }) {
@@ -21,6 +22,7 @@ export function SignInForm({ next }: { next?: string }) {
           Esqueci minha senha
         </Link>
       </div>
+      <Turnstile action="login" resetKey={state} />
       <SubmitButton pending="Entrando...">Entrar</SubmitButton>
     </form>
   );

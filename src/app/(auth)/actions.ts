@@ -53,6 +53,18 @@ function field(formData: FormData, name: string): string {
   return typeof v === "string" ? v : "";
 }
 
+/**
+ * Token do Turnstile (components/auth/turnstile.tsx). Vai para o Supabase, que
+ * valida no servidor dele quando o captcha está ligado no projeto; com o
+ * captcha desligado o Supabase simplesmente ignora.
+ */
+function captchaToken(formData: FormData): string | undefined {
+  return field(formData, "cf-turnstile-response") || undefined;
+}
+
+const CAPTCHA_ERROR =
+  "Não conseguimos confirmar que você não é um robô. Aguarde a verificação abaixo e tente de novo.";
+
 // ---------------------------------------------------------------------------
 // Entrar
 // ---------------------------------------------------------------------------
@@ -65,9 +77,13 @@ export async function signInAction(_prev: ActionState, formData: FormData): Prom
   if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error), values };
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword(parsed.data);
+  const { error } = await supabase.auth.signInWithPassword({
+    ...parsed.data,
+    options: { captchaToken: captchaToken(formData) },
+  });
 
   if (error) {
+    if (error.code === "captcha_failed") return { error: CAPTCHA_ERROR, values };
     // E-mail não confirmado é o único caso em que explicamos: quem digitou a
     // senha certa precisa saber o que fazer. Os demais ficam genéricos, para
     // não confirmar quais e-mails têm conta.
@@ -123,10 +139,12 @@ export async function signUpAction(_prev: ActionState, formData: FormData): Prom
       // O trigger de signup copia isto para profiles.full_name.
       data: { full_name: parsed.data.fullName },
       emailRedirectTo: appUrl("/auth/confirm?next=/minha-conta"),
+      captchaToken: captchaToken(formData),
     },
   });
 
   if (error) {
+    if (error.code === "captcha_failed") return { error: CAPTCHA_ERROR, values };
     if (error.code === "weak_password") {
       return { fieldErrors: { password: ["Essa senha é fraca ou muito comum. Escolha outra."] }, values };
     }
@@ -158,11 +176,17 @@ export async function requestResetAction(_prev: ActionState, formData: FormData)
   }
 
   const supabase = await createClient();
-  // O resultado é ignorado de propósito: sempre respondemos o mesmo texto, com
-  // ou sem conta, para o formulário não revelar quais e-mails existem.
-  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
+  // O resultado é ignorado de propósito — sempre respondemos o mesmo texto, com
+  // ou sem conta, para o formulário não revelar quais e-mails existem. A única
+  // exceção é o captcha: ele não diz nada sobre a conta, e sem avisar o
+  // usuário ficaria esperando um e-mail que nunca foi enviado.
+  const { error } = await supabase.auth.resetPasswordForEmail(parsed.data.email, {
     redirectTo: appUrl("/auth/confirm?next=/auth/reset"),
+    captchaToken: captchaToken(formData),
   });
+  if (error?.code === "captcha_failed") {
+    return { error: CAPTCHA_ERROR, values: { email: parsed.data.email } };
+  }
 
   return {
     message:

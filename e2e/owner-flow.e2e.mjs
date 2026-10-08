@@ -106,10 +106,15 @@ async function session(user) {
   const page = await ctx.newPage();
   page.setDefaultTimeout(45000);
   if (user) {
-    await page.goto(`${BASE}/entrar`);
-    await page.fill("#email", user.email);
-    await page.fill("#password", user.password);
-    await Promise.all([page.waitForURL((u) => !u.pathname.startsWith("/entrar")), page.click("button[type=submit]")]);
+    // Login por link de uso único gerado pela API admin, aberto na tela de
+    // confirmação do próprio site. O formulário de senha tem Turnstile, que um
+    // navegador automatizado não passa — e é para não passar. A confirmação do
+    // link não pede captcha (quem pede é a SOLICITAÇÃO do link, feita aqui
+    // pela API admin).
+    const { data, error } = await admin.auth.admin.generateLink({ type: "magiclink", email: user.email });
+    if (error) throw new Error(`generateLink: ${error.message}`);
+    await page.goto(`${BASE}/auth/confirm?token_hash=${data.properties.hashed_token}&type=magiclink`);
+    await Promise.all([page.waitForURL((u) => !u.pathname.startsWith("/auth/confirm")), page.click("button[type=submit]")]);
   }
   return { ctx, page };
 }

@@ -48,11 +48,15 @@ async function login(page, email, password, next) {
   await page.goto(`${BASE}/entrar${next ? `?next=${encodeURIComponent(next)}` : ""}`);
   await page.fill("#email", email);
   await page.fill("#password", password);
-  await Promise.all([
-    page.waitForLoadState("networkidle"),
-    page.click("button[type=submit]"),
-  ]);
-  await page.waitForTimeout(1500);
+  // Não dá para esperar "networkidle": o iframe do Turnstile fica consultando a
+  // Cloudflare. Espera sair do /entrar ou aparecer o aviso do formulário.
+  await page.click("button[type=submit]");
+  await page.waitForFunction(
+    () => location.pathname !== "/entrar" || !document.querySelector("button[type=submit][disabled]"),
+    null,
+    { timeout: 30000 },
+  );
+  await page.waitForTimeout(500);
 }
 
 try {
@@ -98,8 +102,7 @@ try {
 
     // 5. Sair.
     await page.goto(`${BASE}/minha-conta`);
-    await Promise.all([page.waitForLoadState("networkidle"), page.click("text=Sair")]);
-    await page.waitForTimeout(1000);
+    await Promise.all([page.waitForURL((u) => u.pathname === "/"), page.click("text=Sair")]);
     check("sair leva para a home", new URL(page.url()).pathname === "/", page.url());
     await page.goto(`${BASE}/minha-conta`);
     check("depois de sair, /minha-conta volta a pedir login", new URL(page.url()).pathname === "/entrar", page.url());
@@ -132,8 +135,11 @@ try {
     await page.fill("#email", "nao-e-email");
     await page.fill("#password", "curta");
     await page.fill("#confirmPassword", "outra");
-    await Promise.all([page.waitForLoadState("networkidle"), page.click("button[type=submit]")]);
-    await page.waitForTimeout(1500);
+    await page.click("button[type=submit]");
+    // Sem "networkidle": o iframe do Turnstile não deixa a rede parar.
+    await page.waitForTimeout(300);
+    await page.waitForFunction(() => !document.querySelector("button[type=submit][disabled]"));
+    await page.waitForTimeout(500);
     const text = await page.textContent("body");
     check("cadastro: nome curto rejeitado", text.includes("Informe seu nome completo."));
     check("cadastro: e-mail inválido rejeitado", text.includes("Informe um e-mail válido."));
@@ -155,8 +161,11 @@ try {
     await page.goto(`${BASE}/auth/confirm?token_hash=abc123falso&type=email&next=/minha-conta`);
     const before = await page.textContent("body");
     check("confirm com token mostra botão, sem verificar ao abrir", before.includes("Confirmar e-mail") && !before.includes("expirou"));
-    await Promise.all([page.waitForLoadState("networkidle"), page.click("button[type=submit]")]);
-    await page.waitForTimeout(1500);
+    await page.click("button[type=submit]");
+    // Sem "networkidle": o iframe do Turnstile não deixa a rede parar.
+    await page.waitForTimeout(300);
+    await page.waitForFunction(() => !document.querySelector("button[type=submit][disabled]"));
+    await page.waitForTimeout(500);
     check("token falso, ao clicar, dá 'expirou ou já foi usado'", (await page.textContent("body")).includes("expirou ou já foi usado"));
     await page.screenshot({ path: SHOTS + "04-confirm-token-falso.png", fullPage: true });
 
@@ -180,8 +189,11 @@ try {
       const { ctx, page } = await fresh();
       await page.goto(`${BASE}/esqueci-senha`);
       await page.fill("#email", e);
-      await Promise.all([page.waitForLoadState("networkidle"), page.click("button[type=submit]")]);
-      await page.waitForTimeout(2000);
+      await page.click("button[type=submit]");
+      // Sem "networkidle": o iframe do Turnstile não deixa a rede parar.
+      await page.waitForTimeout(300);
+    await page.waitForFunction(() => !document.querySelector("button[type=submit][disabled]"));
+      await page.waitForTimeout(500);
       msgs.push((await page.textContent("main")).trim());
       await ctx.close();
     }
