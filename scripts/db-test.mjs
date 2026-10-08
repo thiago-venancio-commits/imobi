@@ -27,6 +27,38 @@ create table auth.users (
 create function auth.uid() returns uuid language sql stable as $$
   select nullif(nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub', '')::uuid $$;
 grant execute on function auth.uid() to anon, authenticated;
+-- Minimal stub of Supabase Storage: just what policies and tests touch.
+-- Like the real one, storage.objects has RLS on and full table grants to
+-- anon/authenticated, so the policies are the only thing deciding access.
+create schema storage;
+create table storage.buckets (
+  id text primary key, name text not null, public boolean not null default false,
+  file_size_limit bigint, allowed_mime_types text[], owner uuid,
+  created_at timestamptz default now(), updated_at timestamptz default now());
+create table storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text references storage.buckets (id), name text, owner uuid, metadata jsonb,
+  created_at timestamptz default now(), updated_at timestamptz default now(),
+  last_accessed_at timestamptz);
+alter table storage.objects enable row level security;
+grant usage on schema storage to anon, authenticated;
+grant all on storage.objects to anon, authenticated;
+grant select on storage.buckets to anon, authenticated;
+create function storage.foldername(name text) returns text[] language sql immutable as $$
+  select (string_to_array(name, '/'))[1:array_length(string_to_array(name, '/'), 1) - 1] $$;
+grant execute on function storage.foldername(text) to anon, authenticated;
+-- Same guard as real Supabase: SQL deletes are refused unless the session sets
+-- storage.allow_delete_query, which only the Storage API does. RLS still applies.
+create function storage.protect_delete() returns trigger language plpgsql as $$
+begin
+  if coalesce(current_setting('storage.allow_delete_query', true), 'false') <> 'true' then
+    raise exception 'Direct deletion from storage tables is not allowed. Use the Storage API instead.'
+      using errcode = '42501';
+  end if;
+  return null;
+end $$;
+create trigger protect_objects_delete before delete on storage.objects
+  for each statement execute function storage.protect_delete();
 -- Supabase's default privileges for objects created by postgres in public
 alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
 alter default privileges in schema public grant all on functions to anon, authenticated, service_role;

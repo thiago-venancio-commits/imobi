@@ -26,11 +26,11 @@ begin
     (owner_id,   '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'dono@test.invalid',     now(), '{}', '{"full_name":"Proprietario"}');
 
   -- O trigger de signup criou um profile por usuário, e nada além disso.
-  select count(*) into n from public.profiles;
+  select count(*) into n from public.profiles where id in (master_id, broker_id, broker2_id, buyer_id, owner_id);
   if n <> 5 then raise exception 'ISOLATION_FAIL: signup criou % profiles, esperado 5', n; end if;
-  select count(*) into n from public.platform_admins;
+  select count(*) into n from public.platform_admins where user_id in (master_id, broker_id, broker2_id, buyer_id, owner_id);
   if n <> 0 then raise exception 'ISOLATION_FAIL: signup criou platform_admin'; end if;
-  select count(*) into n from public.brokers;
+  select count(*) into n from public.brokers where user_id in (master_id, broker_id, broker2_id, buyer_id, owner_id);
   if n <> 0 then raise exception 'ISOLATION_FAIL: signup criou broker'; end if;
   checks := checks + 3;
 
@@ -143,12 +143,12 @@ begin
   set local role authenticated;
 
   if not public.is_master() then raise exception 'ISOLATION_FAIL: Master não reconhecido'; end if;
-  select count(*) into n from public.contacts;
+  select count(*) into n from public.contacts where user_id in (master_id, broker_id, broker2_id, buyer_id, owner_id);
   if n <> 2 then raise exception 'ISOLATION_FAIL: Master lê % contatos, esperado 2', n; end if;
-  select count(*) into n from public.profiles;
+  select count(*) into n from public.profiles where id in (master_id, broker_id, broker2_id, buyer_id, owner_id);
   if n <> 5 then raise exception 'ISOLATION_FAIL: Master lê % profiles, esperado 5', n; end if;
   perform public.set_broker_status(broker2_id, 'autorizado');
-  select count(*) into n from public.audit_log where action = 'broker.status';
+  select count(*) into n from public.audit_log where action = 'broker.status' and target_id = broker2_id::text;
   if n <> 1 then raise exception 'ISOLATION_FAIL: set_broker_status não auditou'; end if;
   begin
     perform public.set_user_status(master_id, 'bloqueado');

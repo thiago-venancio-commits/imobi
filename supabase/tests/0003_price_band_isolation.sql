@@ -53,14 +53,14 @@ begin
     raise exception 'ISOLATION_FAIL: faixas estreitas demais — 610k caiu em % e 990k em %', b1, b2;
   end if;
   if b1 <> 'de_600k_1mi' then raise exception 'ISOLATION_FAIL: faixa inesperada %', b1; end if;
-  select count(distinct sale_band) into n from public.properties where sale_band is not null;
+  select count(distinct sale_band) into n from public.properties where id in (p1, p2);
   if n <> 1 then raise exception 'ISOLATION_FAIL: % faixas distintas para preços da mesma faixa', n; end if;
   checks := checks + 3;
 
   -- 3. O comprador lê a faixa, nunca o valor -------------------------------
   perform set_config('request.jwt.claims', json_build_object('sub', v_buyer,'role','authenticated')::text, true);
   set local role authenticated;
-  select count(*) into n from public.properties where sale_band = 'de_600k_1mi';
+  select count(*) into n from public.properties where sale_band = 'de_600k_1mi' and id in (p1, p2);
   if n <> 2 then raise exception 'ISOLATION_FAIL: comprador não consegue filtrar por faixa'; end if;
   select count(*) into n from public.property_private;
   if n <> 0 then raise exception 'ISOLATION_FAIL: comprador leu o preço exato'; end if;

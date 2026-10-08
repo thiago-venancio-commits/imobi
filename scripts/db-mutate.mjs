@@ -240,6 +240,60 @@ grant update (sale_band, rent_band) on public.properties to authenticated;`,
     from: "grant execute on function private.property_is_public(public.property_status) to anon, authenticated;",
     to: "grant execute on function private.property_is_public(public.property_status) to authenticated;",
   },
+  // ---- 0005: storage --------------------------------------------------
+  {
+    name: "upload de foto sem checar o dono da pasta",
+    trap: "#13: qualquer autenticado grava na pasta de qualquer imovel",
+    file: "0005_storage.sql",
+    from: `  for insert to authenticated
+  with check (bucket_id = 'property-media' and private.can_manage_property_files(name));`,
+    to: `  for insert to authenticated
+  with check (bucket_id = 'property-media');`,
+  },
+  {
+    name: "documentos legiveis por qualquer autenticado",
+    trap: "#13: escritura e IPTU de um proprietario abertos a todos",
+    file: "0005_storage.sql",
+    from: `  using (bucket_id = 'property-docs' and private.can_manage_property_files(name));
+
+create policy imobi_docs_insert`,
+    to: `  using (bucket_id = 'property-docs');
+
+create policy imobi_docs_insert`,
+  },
+  {
+    name: "bucket de documentos publico",
+    trap: "documentos acessiveis por URL sem login",
+    file: "0005_storage.sql",
+    from: "  ('property-docs', 'property-docs', false, 10485760,",
+    to: "  ('property-docs', 'property-docs', true, 10485760,",
+  },
+  {
+    name: "anon lista o storage",
+    trap: "listar o bucket revela fotos de imoveis ainda nao aprovados",
+    file: "0005_storage.sql",
+    from: "create policy imobi_media_select on storage.objects",
+    to: `create policy imobi_anon_list on storage.objects for select to anon using (true);
+create policy imobi_media_select on storage.objects`,
+  },
+  {
+    name: "dono bloqueado continua fazendo upload",
+    trap: "bloquear um proprietario nao tira o acesso dele aos arquivos",
+    file: "0005_storage.sql",
+    from: "  select private.caller_active() and (",
+    to: "  select true and (",
+  },
+  {
+    name: "property_media aceita caminho de outro imovel",
+    trap: "anuncio A exibe foto do imovel B",
+    file: "0005_storage.sql",
+    from: `  check (storage_path like property_id::text || '/%');
+
+alter table public.property_documents`,
+    to: `  check (true);
+
+alter table public.property_documents`,
+  },
 ];
 
 const tests = testFiles();
