@@ -10,8 +10,10 @@
     "typecheck": "next typegen && tsc --noEmit",
     "db:test": "node scripts/db-test.mjs",
     "db:mutate": "node scripts/db-mutate.mjs",
-    "verify": "npm run typecheck && npm run lint && npm run db:test && npm run db:mutate",
-    "e2e:auth": "node e2e/auth.e2e.mjs"
+    "verify": "npm run typecheck && npm run lint && npm run db:test && npm run db:mutate && npm run media:test",
+    "e2e:auth": "node e2e/auth.e2e.mjs",
+    "media:test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/media-test.mjs",
+    "e2e:owner": "node --env-file=.env.local e2e/owner-flow.e2e.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -20,6 +22,7 @@
     "@supabase/supabase-js": "^2.117.2",
     "class-variance-authority": "^0.7.1",
     "cn": "^0.4.0",
+    "exifr": "^7.1.3",
     "lucide-react": "^1.52.0",
     "next": "16.3.8",
     "next-themes": "^0.4.6",

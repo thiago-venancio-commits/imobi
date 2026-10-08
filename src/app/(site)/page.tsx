@@ -12,7 +12,7 @@ import Link from "next/link";
 import { PropertyCard } from "@/components/property/property-card";
 import { PropertySearch } from "@/components/property/property-search";
 import { Button } from "@/components/ui/button";
-import { listPublicProperties } from "@/lib/server/properties";
+import { listCovers, listPublicProperties } from "@/lib/server/properties";
 
 const CATEGORIES = [
   { icon: HomeIcon, label: "Casas", href: "/imoveis?type=casa" },
@@ -33,6 +33,7 @@ export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
   const featured = await listPublicProperties({ limit: 6 });
+  const covers = await listCovers(featured.map((p) => p.id));
 
   return (
     <>
@@ -117,7 +118,7 @@ export default async function HomePage() {
         {featured.length > 0 ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map((property) => (
-              <PropertyCard key={property.id} property={property} />
+              <PropertyCard key={property.id} property={property} coverUrl={covers.get(property.id)} />
             ))}
           </div>
         ) : (

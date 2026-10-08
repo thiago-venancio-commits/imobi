@@ -54,15 +54,34 @@ export default async function MyAccountPage() {
             Ir para os imóveis →
           </Link>
         </li>
-        <li className="rounded-2xl bg-card p-5 ring-1 ring-border">
-          <h2 className="font-semibold">Anunciar meu imóvel</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Cadastre seu imóvel. Nossa equipe revisa antes de publicar.
-          </p>
-          <Link href="/anunciar" className="mt-3 inline-block text-sm font-medium text-brand-500 hover:underline">
-            Quero anunciar →
-          </Link>
-        </li>
+        {caller.isMaster ? (
+          <li className="rounded-2xl bg-card p-5 ring-1 ring-brand-500">
+            <h2 className="font-semibold">Painel Master</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Aprovações, imóveis, proprietários e configurações.</p>
+            <Link href="/master" className="mt-3 inline-block text-sm font-medium text-brand-500 hover:underline">
+              Abrir o painel →
+            </Link>
+          </li>
+        ) : null}
+        {caller.ownerStatus === "pendente" || caller.ownerStatus === "aprovado" ? (
+          <li className="rounded-2xl bg-card p-5 ring-1 ring-border">
+            <h2 className="font-semibold">Meus imóveis</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Cadastre, edite e acompanhe seus anúncios.</p>
+            <Link href="/proprietario" className="mt-3 inline-block text-sm font-medium text-brand-500 hover:underline">
+              Ir para a área do proprietário →
+            </Link>
+          </li>
+        ) : (
+          <li className="rounded-2xl bg-card p-5 ring-1 ring-border">
+            <h2 className="font-semibold">Anunciar meu imóvel</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Cadastre seu imóvel. Nossa equipe revisa antes de publicar.
+            </p>
+            <Link href="/anunciar" className="mt-3 inline-block text-sm font-medium text-brand-500 hover:underline">
+              Quero anunciar →
+            </Link>
+          </li>
+        )}
       </ul>
     </div>
   );

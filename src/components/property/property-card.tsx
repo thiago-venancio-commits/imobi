@@ -1,4 +1,5 @@
 import { Bath, BedDouble, Car, Mail, Maximize } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,7 @@ import { cn } from "@/lib/utils";
  * prop de preço aqui — nem haveria de onde tirar uma: o valor mora em
  * `property_private`, fora do alcance de anon e do comprador.
  */
-export function PropertyCard({ property }: { property: PublicProperty }) {
+export function PropertyCard({ property, coverUrl }: { property: PublicProperty; coverUrl?: string }) {
   const isRent = property.purpose === "locacao";
   const band = bandLabel(property.purpose, property.sale_band, property.rent_band);
 
@@ -26,8 +27,16 @@ export function PropertyCard({ property }: { property: PublicProperty }) {
   return (
     <article className="group overflow-hidden rounded-2xl bg-card shadow-sm ring-1 ring-border transition-shadow hover:shadow-lg">
       <Link href={`/imoveis/${property.code}`} className="block">
-        <div className="relative aspect-[4/3] bg-muted">
-          {/* A foto de capa entra aqui quando houver mídia publicada. */}
+        <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+          {coverUrl ? (
+            <Image
+              src={coverUrl}
+              alt=""
+              fill
+              sizes="(min-width: 1024px) 400px, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : null}
           <Badge
             className={cn(
               "absolute left-3 top-3 border-0 text-white",

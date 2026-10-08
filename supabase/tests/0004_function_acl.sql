@@ -59,10 +59,11 @@ begin
   from pg_proc p join pg_namespace ns on ns.oid = p.pronamespace
   where ns.nspname = 'public'
     and p.proname in ('create_property','set_property_status','submit_property',
-                      'is_master','my_roles','set_broker_status')
+                      'is_master','my_roles','set_broker_status',
+                      'apply_as_owner','master_owners')
     and has_function_privilege('authenticated', p.oid, 'execute');
-  if n <> 6 then
-    raise exception 'ISOLATION_FAIL: authenticated perdeu EXECUTE em RPCs do app (% de 6)', n;
+  if n <> 8 then
+    raise exception 'ISOLATION_FAIL: authenticated perdeu EXECUTE em RPCs do app (% de 8)', n;
   end if;
   checks := checks + 1;
 

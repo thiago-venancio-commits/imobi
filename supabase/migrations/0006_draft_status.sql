@@ -1,0 +1,11 @@
+-- =============================================================================
+-- imobi — status "rascunho".
+--
+-- O imóvel nasce como rascunho e só entra na fila do Master quando o dono
+-- envia (submit_property). Sem isso, a fila de aprovação recebia anúncios pela
+-- metade, sem foto e sem endereço, no instante em que o dono clicava "novo".
+--
+-- Arquivo separado de propósito: o Postgres não deixa usar um valor de enum na
+-- mesma transação que o criou, e cada migration roda numa transação só.
+-- =============================================================================
+alter type public.property_status add value if not exists 'rascunho' before 'aguardando_aprovacao';

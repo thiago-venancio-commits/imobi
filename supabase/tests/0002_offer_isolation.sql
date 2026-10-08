@@ -39,10 +39,11 @@ begin
          bedrooms = 3, suites = 1, parking_spaces = 2
    where id = prop;
 
-  -- O imóvel nasce aguardando aprovação, com código gerado e dono vindo do token.
+  -- O imóvel nasce rascunho (só entra na fila quando o dono envia), com
+  -- código gerado e dono vindo do token.
   select status into st from public.properties where id = prop;
-  if st <> 'aguardando_aprovacao' then
-    raise exception 'ISOLATION_FAIL: imóvel nasceu como %, esperado aguardando_aprovacao', st; end if;
+  if st <> 'rascunho' then
+    raise exception 'ISOLATION_FAIL: imóvel nasceu como %, esperado rascunho', st; end if;
   select count(*) into n from public.property_private pp
    where pp.property_id = prop and pp.owner_id = v_owner;
   if n <> 1 then raise exception 'ISOLATION_FAIL: create_property não vinculou o dono'; end if;

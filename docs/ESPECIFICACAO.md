@@ -447,3 +447,31 @@ O produto chama-se **TSV Imóveis**. `imobi` é só o nome do repositório.
 O MVP atende uma imobiliária, com um Master. A plataforma não é vendida a
 várias imobiliárias nesta fase. Isso dispensa a camada de organizações,
 assentos e planos; a estrutura permite acrescentá-la depois.
+
+## E4 — Proprietário cadastra antes de ser aprovado (2026-10-08)
+
+**Muda:** §7 e §8 (ordem dos passos, não a regra).
+
+Quem se candidata em `/anunciar` já pode cadastrar e enviar o imóvel na mesma
+visita. Nada vai ao ar até o Master aprovar **o proprietário e o imóvel**. Quem
+garante é um trigger do banco (`0007_owner_flow.sql`), não a tela: publicar ou
+aprovar imóvel de proprietário pendente ou bloqueado é recusado venha o pedido
+de onde vier.
+
+O imóvel nasce como **rascunho** (status novo, fora da lista do §27) e só entra
+na fila do Master quando o dono envia, com título, local, valor e pelo menos
+uma foto. Foto nova em anúncio publicado devolve o anúncio para aprovação,
+como já acontecia com o texto.
+
+## E5 — Localização das fotos e vídeos (2026-10-08)
+
+**Muda:** §6 (proteção da localização exata).
+
+Fotos e vídeos de celular trazem a coordenada GPS de onde foram feitos. Cada
+arquivo é guardado duas vezes:
+
+- a cópia **pública**, sem nenhum metadado (foto redesenhada no navegador;
+  vídeo com as caixas de localização zeradas), é a única que o site serve;
+- o **original**, com GPS, fica no bucket privado, visível só para o dono e o
+  Master. Decisão de Franklin: ele serve de prova antifraude — o painel do
+  Master mostra a que distância do endereço declarado cada foto foi feita.

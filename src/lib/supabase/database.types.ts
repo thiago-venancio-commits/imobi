@@ -366,6 +366,42 @@ export type Database = {
           },
         ]
       }
+      property_media_originals: {
+        Row: {
+          created_at: string
+          media_id: string
+          property_id: string
+          storage_path: string
+        }
+        Insert: {
+          created_at?: string
+          media_id: string
+          property_id: string
+          storage_path: string
+        }
+        Update: {
+          created_at?: string
+          media_id?: string
+          property_id?: string
+          storage_path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_media_originals_media_id_property_id_fkey"
+            columns: ["media_id", "property_id"]
+            isOneToOne: false
+            referencedRelation: "property_media"
+            referencedColumns: ["id", "property_id"]
+          },
+          {
+            foreignKeyName: "property_media_originals_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       property_private: {
         Row: {
           accepts_financing: boolean
@@ -475,6 +511,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_as_owner: {
+        Args: {
+          _cpf_cnpj?: string
+          _full_name: string
+          _phone: string
+          _whatsapp?: string
+        }
+        Returns: Database["public"]["Enums"]["owner_status"]
+      }
       create_property: {
         Args: {
           _purpose: Database["public"]["Enums"]["property_purpose"]
@@ -485,6 +530,25 @@ export type Database = {
       }
       is_active_broker: { Args: never; Returns: boolean }
       is_master: { Args: never; Returns: boolean }
+      master_owners: {
+        Args: {
+          _status?: Database["public"]["Enums"]["owner_status"]
+          _user?: string
+        }
+        Returns: {
+          applied_at: string
+          cpf_cnpj: string
+          decided_at: string
+          email: string
+          full_name: string
+          phone: string
+          properties_count: number
+          status: Database["public"]["Enums"]["owner_status"]
+          user_id: string
+          user_status: Database["public"]["Enums"]["user_status"]
+          whatsapp: string
+        }[]
+      }
       my_roles: {
         Args: never
         Returns: {
@@ -549,6 +613,7 @@ export type Database = {
       property_condition: "novo" | "usado" | "lancamento"
       property_purpose: "venda" | "locacao" | "venda_locacao"
       property_status:
+        | "rascunho"
         | "aguardando_aprovacao"
         | "aprovado"
         | "publicado"
@@ -708,6 +773,7 @@ export const Constants = {
       property_condition: ["novo", "usado", "lancamento"],
       property_purpose: ["venda", "locacao", "venda_locacao"],
       property_status: [
+        "rascunho",
         "aguardando_aprovacao",
         "aprovado",
         "publicado",
@@ -738,7 +804,6 @@ export const Constants = {
     },
   },
 } as const
-
 
 // --- Atalhos usados pelo app -----------------------------------------------
 // Os enums do banco são a fonte da verdade: se alguém acrescentar um status de

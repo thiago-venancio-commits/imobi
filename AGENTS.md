@@ -61,6 +61,12 @@ npm run verify     # typecheck + lint + db:test + db:mutate
   conserte o teste, não a mutação.
 - Toda regra nova de privacidade entra como verificação em
   `supabase/tests/` **e** como mutação em `scripts/db-mutate.mjs`.
+- `npm run media:test` confere que a limpeza de vídeo tira a coordenada GPS
+  sem mexer no conteúdo (faz parte do `verify`).
 - `npm run e2e:auth` testa login, cadastro, links de e-mail e redirecionamentos
   num Chrome real contra o servidor rodando. Precisa de `E2E_EMAIL` e
   `E2E_PASSWORD` de um usuário de teste já confirmado.
+- `npm run e2e:owner` percorre o M2 inteiro (candidatura, cadastro com CEP e
+  foto com GPS, aprovação do Master, anúncio público sem preço nem endereço).
+  Lê `.env.local`, cria um proprietário e um Master descartáveis pela API
+  admin e apaga tudo no fim.

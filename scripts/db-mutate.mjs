@@ -150,15 +150,7 @@ const mutations = [
     to: `  angle := 0;
   radius := 0;`,
   },
-  {
-    name: "qualquer um cadastra imóvel",
-    trap: "§7/§8: some a aprovação do proprietário pelo Master",
-    file: "0002_offer.sql",
-    from: `  if not private.is_approved_owner() then
-    raise exception 'owner_not_approved' using errcode = '42501';
-  end if;`,
-    to: "",
-  },
+  // "qualquer um cadastra imóvel" mudou para a 0007, que substitui create_property.
   {
     name: "comissão editável pelo proprietário",
     trap: "§47: informação interna de comissão vira campo do dono",
@@ -293,6 +285,112 @@ alter table public.property_documents`,
     to: `  check (true);
 
 alter table public.property_documents`,
+  },
+  // ---- 0007: fluxo do proprietário -------------------------------------
+  {
+    name: "qualquer um cadastra imóvel",
+    trap: "§7/§8: comprador sem candidatura vira dono de anúncio",
+    file: "0007_owner_flow.sql",
+    from: `  if not private.is_owner_applicant() then
+    raise exception 'not_an_owner' using errcode = '42501';
+  end if;`,
+    to: "",
+  },
+  {
+    name: "imóvel publicado com proprietário pendente",
+    trap: "§15: o Master aprova o anúncio sem ter aprovado quem anuncia",
+    file: "0007_owner_flow.sql",
+    from: `create trigger properties_requires_approved_owner
+  before update of status on public.properties
+  for each row execute function private.tg_property_requires_approved_owner();`,
+    to: "-- trigger removido pela mutacao",
+  },
+  {
+    name: "candidatura nasce aprovada",
+    trap: "#1: o próprio cadastro concede o papel de proprietário aprovado",
+    file: "0007_owner_flow.sql",
+    from: "    insert into public.owner_profiles (user_id) values (v_uid);",
+    to: "    insert into public.owner_profiles (user_id, status) values (v_uid, 'aprovado');",
+  },
+  {
+    name: "proprietário bloqueado se candidata de novo",
+    trap: "bloquear o proprietário não impede que ele volte a anunciar",
+    file: "0007_owner_flow.sql",
+    from: `  if v_status = 'bloqueado' then
+    raise exception 'owner_blocked' using errcode = '42501';
+  end if;`,
+    to: "",
+  },
+  {
+    name: "master_owners sem checar o Master",
+    trap: "#2: qualquer autenticado lista e-mail, telefone e CPF de proprietários",
+    file: "0007_owner_flow.sql",
+    from: `#variable_conflict use_column
+begin
+  if not private.is_master() then
+    raise exception 'forbidden' using errcode = '42501';
+  end if;`,
+    to: `#variable_conflict use_column
+begin`,
+  },
+  {
+    name: "envio sem foto",
+    trap: "a fila do Master recebe anúncio sem foto nenhuma",
+    file: "0007_owner_flow.sql",
+    from: `  if not exists (select 1 from public.property_media m
+                  where m.property_id = _property and m.kind = 'foto') then
+    missing := array_append(missing, 'fotos');
+  end if;`,
+    to: "",
+  },
+  {
+    name: "imóvel nasce na fila de aprovação",
+    trap: "o Master recebe rascunhos pela metade",
+    file: "0007_owner_flow.sql",
+    from: "  values (_type, _purpose, coalesce(_title, ''), 'rascunho')",
+    to: "  values (_type, _purpose, coalesce(_title, ''), 'aguardando_aprovacao')",
+  },
+  {
+    name: "originais com GPS legíveis por qualquer autenticado",
+    trap: "a localização exata do imóvel vaza pelo original da foto",
+    file: "0007_owner_flow.sql",
+    from: `  using ((select private.owns_property(property_id)) or (select private.is_master()))
+  with check ((select private.owns_property(property_id)) or (select private.is_master()));
+
+revoke all on public.property_media_originals`,
+    to: `  using (true)
+  with check ((select private.owns_property(property_id)) or (select private.is_master()));
+
+revoke all on public.property_media_originals`,
+  },
+  {
+    name: "original gravado fora de /originais/",
+    trap: "o original com GPS vai parar no caminho da foto pública",
+    file: "0007_owner_flow.sql",
+    from: "    check (storage_path like property_id::text || '/originais/%')",
+    to: "    check (true)",
+  },
+  {
+    name: "foto nova em anúncio publicado vai ao ar sem aprovação",
+    trap: "§7: aprova-se uma galeria limpa e acrescenta-se uma placa com telefone",
+    file: "0007_owner_flow.sql",
+    from: `create trigger property_media_reapprove
+  after insert or update of storage_path on public.property_media
+  for each row execute function private.tg_media_reapprove();`,
+    to: "-- trigger removido pela mutacao",
+  },
+  // ---- 0001 + 0008: configuração ---------------------------------------
+  {
+    name: "WhatsApp do Master editável por qualquer autenticado",
+    trap: "§41: alguém troca o número e desvia todos os interessados para si",
+    from: `create policy site_settings_update_master on public.site_settings
+  for update to authenticated
+  using ((select private.is_master()))
+  with check ((select private.is_master()));`,
+    to: `create policy site_settings_update_master on public.site_settings
+  for update to authenticated
+  using (true)
+  with check (true);`,
   },
 ];
 

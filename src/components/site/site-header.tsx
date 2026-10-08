@@ -7,6 +7,7 @@ import { Logo } from "@/components/site/logo";
 const NAV = [
   { href: "/", label: "Início" },
   { href: "/imoveis", label: "Imóveis" },
+  { href: "/anunciar", label: "Anunciar imóvel" },
   { href: "/sobre", label: "Sobre nós" },
   { href: "/duvidas", label: "Dúvidas" },
   { href: "/contato", label: "Fale conosco" },

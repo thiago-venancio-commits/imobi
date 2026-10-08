@@ -1,4 +1,5 @@
-import type { Database } from "@/lib/supabase/database.types";
+import { publicEnv } from "@/lib/env";
+import type { Database, PropertyStatus } from "@/lib/supabase/database.types";
 
 export type SaleBand = "ate_300k" | "de_300k_600k" | "de_600k_1mi" | "acima_1mi";
 export type RentBand = "ate_2k" | "de_2k_5k" | "de_5k_10k" | "acima_10k";
@@ -63,6 +64,76 @@ export function purposeLabel(purpose: string): string {
   if (purpose === "locacao") return "Aluguel";
   if (purpose === "venda_locacao") return "Venda ou aluguel";
   return "Venda";
+}
+
+export const PROPERTY_PURPOSES = [
+  { value: "venda", label: "Venda" },
+  { value: "locacao", label: "Aluguel" },
+  { value: "venda_locacao", label: "Venda ou aluguel" },
+] as const;
+
+export const PROPERTY_CONDITIONS = [
+  { value: "usado", label: "Usado" },
+  { value: "novo", label: "Novo" },
+  { value: "lancamento", label: "Lançamento" },
+] as const;
+
+/** §27, mais o rascunho (0006). */
+export const STATUS_LABELS: Record<PropertyStatus, string> = {
+  rascunho: "Rascunho",
+  aguardando_aprovacao: "Aguardando aprovação",
+  aprovado: "Aprovado",
+  publicado: "Publicado",
+  reservado: "Reservado",
+  em_negociacao: "Em negociação",
+  vendido: "Vendido",
+  alugado: "Alugado",
+  pausado: "Pausado",
+  rejeitado: "Rejeitado",
+  cancelado: "Cancelado",
+};
+
+/** Mesma lista de private.property_is_public(): o que aparece no site. */
+export const PUBLIC_STATUSES: PropertyStatus[] = ["publicado", "reservado", "em_negociacao"];
+
+/** O dono pode enviar para aprovação a partir destes status (submit_property). */
+export const SUBMITTABLE_STATUSES: PropertyStatus[] = ["rascunho", "rejeitado", "pausado"];
+
+/**
+ * URL pública de uma mídia do bucket `property-media`. Só serve a cópia LIMPA:
+ * o original com GPS está no bucket privado e não tem URL pública.
+ */
+export function mediaUrl(path: string): string {
+  return `${publicEnv.supabaseUrl}/storage/v1/object/public/property-media/${path
+    .split("/")
+    .map(encodeURIComponent)
+    .join("/")}`;
+}
+
+/**
+ * Valor em reais digitado à brasileira: "650.000", "650.000,50", "R$ 1.200".
+ * Devolve null para vazio e NaN para lixo, para o schema poder distinguir.
+ */
+export function parseBRL(input: string): number | null {
+  const raw = input.replace(/[^\d.,]/g, "");
+  if (!raw) return null;
+  let normalized: string;
+  if (raw.includes(",")) {
+    normalized = raw.replace(/\./g, "").replace(",", ".");
+  } else if (/^\d{1,3}(\.\d{3})+$/.test(raw)) {
+    normalized = raw.replace(/\./g, "");
+  } else {
+    normalized = raw;
+  }
+  const n = Number(normalized);
+  return Number.isFinite(n) ? n : Number.NaN;
+}
+
+export function formatBRL(value: number | string | null): string {
+  if (value === null || value === "") return "";
+  const n = typeof value === "string" ? Number(value) : value;
+  if (!Number.isFinite(n)) return "";
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(n);
 }
 
 /** Área formatada em m², sem casas decimais inúteis. */
