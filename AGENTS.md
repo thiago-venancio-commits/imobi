@@ -73,3 +73,6 @@ npm run verify     # typecheck + lint + db:test + db:mutate
   Supabase só de testes, o `.env.local` aponta para PRODUÇÃO e o imóvel de
   teste fica ~1 minuto no site público. Por isso o script recusa rodar sem
   `E2E_ALLOW_LIVE_DB=1`.
+- `npm run e2e:moderation` testa bloqueio (visão do dono) e exclusão definitiva
+  pelo Master (linhas, arquivos e auditoria). Usa só um rascunho criado pela API
+  admin, nunca publicado, então não aparece no site.

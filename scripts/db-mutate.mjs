@@ -379,6 +379,36 @@ revoke all on public.property_media_originals`,
   for each row execute function private.tg_media_reapprove();`,
     to: "-- trigger removido pela mutacao",
   },
+  // ---- 0009: moderação --------------------------------------------------
+  {
+    name: "dono tira o próprio anúncio do bloqueio",
+    trap: "o Master bloqueia um anúncio fraudulento e o dono o devolve à fila",
+    file: "0009_property_moderation.sql",
+    from: `create trigger properties_block_master_only
+  before update of status on public.properties
+  for each row execute function private.tg_property_block_is_master_only();`,
+    to: "-- trigger removido pela mutacao",
+  },
+  {
+    name: "delete_property sem checar o Master",
+    trap: "#2: qualquer autenticado apaga anúncio alheio",
+    file: "0009_property_moderation.sql",
+    from: `begin
+  if not private.is_master() then
+    raise exception 'forbidden' using errcode = '42501';
+  end if;
+
+  select p.code, p.title`,
+    to: `begin
+  select p.code, p.title`,
+  },
+  {
+    name: "exclusão sem rastro na auditoria",
+    trap: "§26: um anúncio some e ninguém sabe quem apagou",
+    file: "0009_property_moderation.sql",
+    from: /  perform private\.log_audit\('property\.deleted'[\s\S]*?\)\);\n/,
+    to: "",
+  },
   // ---- 0001 + 0008: configuração ---------------------------------------
   {
     name: "WhatsApp do Master editável por qualquer autenticado",

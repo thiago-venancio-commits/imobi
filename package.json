@@ -13,7 +13,8 @@
     "verify": "npm run typecheck && npm run lint && npm run db:test && npm run db:mutate && npm run media:test",
     "e2e:auth": "node e2e/auth.e2e.mjs",
     "media:test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/media-test.mjs",
-    "e2e:owner": "node --env-file=.env.local e2e/owner-flow.e2e.mjs"
+    "e2e:owner": "node --env-file=.env.local e2e/owner-flow.e2e.mjs",
+    "e2e:moderation": "node --env-file=.env.local e2e/moderation.e2e.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

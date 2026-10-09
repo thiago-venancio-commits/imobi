@@ -81,6 +81,53 @@ export async function setPropertyStatusAction(
   return { message: "Status atualizado." };
 }
 
+/**
+ * Exclusão definitiva do anúncio (só o Master; a RPC confere de novo).
+ *
+ * Ordem importa: primeiro os ARQUIVOS, depois as linhas. Se apagássemos as
+ * linhas antes e o Storage falhasse, as fotos públicas continuariam acessíveis
+ * pela URL, sem nenhum registro apontando para elas. Assim, se algo falha no
+ * meio, o anúncio continua existindo e dá para tentar de novo.
+ *
+ * Exige digitar o código do imóvel (IMB-00041) para confirmar.
+ */
+export async function deletePropertyAction(
+  propertyId: string,
+  _prev: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  if (!uuid.safeParse(propertyId).success) return { error: "Imóvel inválido." };
+  const typed = String(formData.get("confirmCode") ?? "").trim().toUpperCase();
+  const caller = await master();
+
+  const { data: p } = await caller.supabase.from("properties").select("code").eq("id", propertyId).maybeSingle();
+  if (!p) return { error: "Imóvel não encontrado." };
+  if (typed !== p.code) {
+    return { fieldErrors: { confirmCode: [`Digite ${p.code} para confirmar.`] }, values: { confirmCode: typed } };
+  }
+
+  for (const bucket of ["property-media", "property-docs"] as const) {
+    for (const folder of [propertyId, `${propertyId}/originais`, `${propertyId}/documentos`]) {
+      const { data: files, error: listError } = await caller.supabase.storage.from(bucket).list(folder, { limit: 1000 });
+      if (listError) return { error: "Não foi possível apagar os arquivos. Nada foi excluído; tente de novo." };
+      // Entradas sem id são as subpastas; elas somem sozinhas quando esvaziam.
+      const paths = (files ?? []).filter((f) => f.id).map((f) => `${folder}/${f.name}`);
+      if (paths.length) {
+        const { error } = await caller.supabase.storage.from(bucket).remove(paths);
+        if (error) return { error: "Não foi possível apagar os arquivos. Nada foi excluído; tente de novo." };
+      }
+    }
+  }
+
+  const { error } = await caller.supabase.rpc("delete_property", { _property: propertyId });
+  if (error) return { error: "Os arquivos foram apagados, mas o anúncio não. Tente excluir de novo." };
+
+  revalidatePath("/master", "layout");
+  revalidatePath("/imoveis");
+  revalidatePath("/");
+  redirect("/master/imoveis?status=todos");
+}
+
 export async function setCoverAsMasterAction(propertyId: string, mediaId: string): Promise<void> {
   if (!uuid.safeParse(propertyId).success || !uuid.safeParse(mediaId).success) return;
   const caller = await master();

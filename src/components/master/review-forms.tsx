@@ -2,12 +2,12 @@
 
 import { useActionState, useState } from "react";
 
-import { setCommissionAction, setPropertyStatusAction } from "@/app/(site)/master/actions";
+import { deletePropertyAction, setCommissionAction, setPropertyStatusAction } from "@/app/(site)/master/actions";
 import { FormNotice } from "@/components/auth/form-parts";
 import { SaveButton, TextAreaField, TextField } from "@/components/forms/fields";
 import { Button } from "@/components/ui/button";
 import type { ActionState } from "@/lib/auth/schemas";
-import { STATUS_LABELS } from "@/lib/properties";
+import { PUBLIC_STATUSES, STATUS_LABELS } from "@/lib/properties";
 import type { PropertyStatus } from "@/lib/supabase/database.types";
 
 /**
@@ -26,7 +26,9 @@ export function StatusPanel({
   const [state, action] = useActionState<ActionState, FormData>(setPropertyStatusAction.bind(null, propertyId), {});
   const [rejecting, setRejecting] = useState(false);
 
-  const others: PropertyStatus[] = ["reservado", "em_negociacao", "vendido", "alugado", "pausado", "cancelado"];
+  // "Bloqueado" (pausado) tem botão próprio abaixo.
+  const others: PropertyStatus[] = ["reservado", "em_negociacao", "vendido", "alugado", "cancelado"];
+  const isPublic = PUBLIC_STATUSES.includes(status);
 
   return (
     <div className="space-y-3">
@@ -36,7 +38,11 @@ export function StatusPanel({
           <form action={action}>
             <input type="hidden" name="status" value="publicado" />
             <SaveButton className="h-10 w-full" pending="Publicando...">
-              {status === "em_negociacao" || status === "reservado" ? "Voltar a disponível" : "Aprovar e publicar"}
+              {status === "em_negociacao" || status === "reservado"
+                ? "Voltar a disponível"
+                : status === "pausado"
+                  ? "Desbloquear e publicar"
+                  : "Aprovar e publicar"}
             </SaveButton>
           </form>
         ) : (
@@ -46,7 +52,16 @@ export function StatusPanel({
         )
       ) : null}
 
-      {status !== "rejeitado" ? (
+      {isPublic ? (
+        <form action={action}>
+          <input type="hidden" name="status" value="pausado" />
+          <SaveButton variant="destructive" className="h-10 w-full" pending="Bloqueando...">
+            Bloquear anúncio (tirar do ar)
+          </SaveButton>
+        </form>
+      ) : null}
+
+      {status !== "rejeitado" && status !== "pausado" ? (
         rejecting ? (
           <form action={action} className="space-y-2">
             <input type="hidden" name="status" value="rejeitado" />
@@ -115,6 +130,43 @@ export function CommissionForm({ propertyId, initial }: { propertyId: string; in
           className="flex-1"
         />
         <SaveButton variant="outline">Salvar</SaveButton>
+      </div>
+    </form>
+  );
+}
+
+
+/**
+ * Exclusão definitiva. Fica escondida atrás de um segundo clique e pede o
+ * código do imóvel digitado, para não apagar o anúncio errado por engano.
+ */
+export function DeleteProperty({ propertyId, code }: { propertyId: string; code: string }) {
+  const [state, action] = useActionState<ActionState, FormData>(deletePropertyAction.bind(null, propertyId), {});
+  const [open, setOpen] = useState(false);
+
+  if (!open && !state.error && !state.fieldErrors) {
+    return (
+      <Button type="button" variant="ghost" className="h-9 w-full text-destructive" onClick={() => setOpen(true)}>
+        Excluir anúncio definitivamente...
+      </Button>
+    );
+  }
+
+  return (
+    <form action={action} className="space-y-3 rounded-xl bg-destructive/5 p-3 ring-1 ring-destructive/30">
+      <FormNotice state={state} />
+      <p className="text-sm">
+        Apaga o anúncio, todas as fotos, vídeos, originais e documentos. <strong>Não dá para desfazer.</strong> Para
+        só tirar do ar, use <em>Bloquear</em>.
+      </p>
+      <TextField name="confirmCode" label={`Digite ${code} para confirmar`} state={state} autoComplete="off" />
+      <div className="flex gap-2">
+        <SaveButton variant="destructive" pending="Excluindo...">
+          Excluir para sempre
+        </SaveButton>
+        <Button type="button" variant="ghost" className="h-10" onClick={() => setOpen(false)}>
+          Cancelar
+        </Button>
       </div>
     </form>
   );

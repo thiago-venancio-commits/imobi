@@ -15,7 +15,7 @@ const TABS: { value: PropertyStatus | "todos"; label: string }[] = [
   { value: "publicado", label: "Publicados" },
   { value: "rascunho", label: "Rascunhos" },
   { value: "rejeitado", label: "Rejeitados" },
-  { value: "pausado", label: "Pausados" },
+  { value: "pausado", label: "Bloqueados" },
   { value: "todos", label: "Todos" },
 ];
 

@@ -7,7 +7,7 @@ import { Star } from "lucide-react";
 
 import { setCoverAsMasterAction, setLocationPrecisionAction } from "@/app/(site)/master/actions";
 import { LocationCheck } from "@/components/master/location-check";
-import { CommissionForm, StatusPanel } from "@/components/master/review-forms";
+import { CommissionForm, DeleteProperty, StatusPanel } from "@/components/master/review-forms";
 import { formatDate, formatPhone } from "@/components/master/status-tabs";
 import { StatusBadge } from "@/components/property/status-badge";
 import { Button } from "@/components/ui/button";
@@ -250,6 +250,8 @@ export default async function MasterPropertyPage({ params }: PageProps<"/master/
           <Card title="Comissão">
             <CommissionForm propertyId={p.id} initial={priv.commission_pct} />
           </Card>
+
+          <DeleteProperty propertyId={p.id} code={p.code} />
         </aside>
       </div>
     </>

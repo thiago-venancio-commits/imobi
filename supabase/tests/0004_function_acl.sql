@@ -60,10 +60,10 @@ begin
   where ns.nspname = 'public'
     and p.proname in ('create_property','set_property_status','submit_property',
                       'is_master','my_roles','set_broker_status',
-                      'apply_as_owner','master_owners')
+                      'apply_as_owner','master_owners','delete_property')
     and has_function_privilege('authenticated', p.oid, 'execute');
-  if n <> 8 then
-    raise exception 'ISOLATION_FAIL: authenticated perdeu EXECUTE em RPCs do app (% de 8)', n;
+  if n <> 9 then
+    raise exception 'ISOLATION_FAIL: authenticated perdeu EXECUTE em RPCs do app (% de 9)', n;
   end if;
   checks := checks + 1;
 

@@ -284,6 +284,9 @@ export async function submitPropertyAction(propertyId: string): Promise<ActionSt
       const items = m[1].split(",").map((k) => MISSING_LABELS[k] ?? k);
       return { error: `Antes de enviar, falta preencher: ${items.join(", ")}.` };
     }
+    if (error.message.includes("blocked_by_master")) {
+      return { error: "Este anúncio foi bloqueado pela equipe TSV. Fale com a equipe para entender o motivo." };
+    }
     if (error.message.includes("invalid_status")) {
       return { error: "Este imóvel já está em análise ou publicado." };
     }

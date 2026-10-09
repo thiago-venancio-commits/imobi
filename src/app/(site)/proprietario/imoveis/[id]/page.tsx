@@ -193,6 +193,11 @@ export default async function EditPropertyPage({ params, searchParams }: PagePro
               propertyId={p.id}
               label={p.status === "rascunho" ? "Enviar para aprovação" : "Reenviar para aprovação"}
             />
+          ) : p.status === "pausado" ? (
+            <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              Anúncio bloqueado pela equipe TSV e fora do site. Só a equipe pode desbloquear; fale conosco para
+              entender o motivo.
+            </p>
           ) : p.status === "aguardando_aprovacao" ? (
             <p className="text-sm text-muted-foreground">Em análise pela equipe. Você pode continuar ajustando.</p>
           ) : isPublic ? (

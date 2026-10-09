@@ -528,6 +528,7 @@ export type Database = {
         }
         Returns: string
       }
+      delete_property: { Args: { _property: string }; Returns: undefined }
       is_active_broker: { Args: never; Returns: boolean }
       is_master: { Args: never; Returns: boolean }
       master_owners: {

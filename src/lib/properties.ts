@@ -88,7 +88,8 @@ export const STATUS_LABELS: Record<PropertyStatus, string> = {
   em_negociacao: "Em negociação",
   vendido: "Vendido",
   alugado: "Alugado",
-  pausado: "Pausado",
+  // No banco é "pausado"; para o Master e o dono é o bloqueio (0009).
+  pausado: "Bloqueado",
   rejeitado: "Rejeitado",
   cancelado: "Cancelado",
 };
@@ -96,8 +97,11 @@ export const STATUS_LABELS: Record<PropertyStatus, string> = {
 /** Mesma lista de private.property_is_public(): o que aparece no site. */
 export const PUBLIC_STATUSES: PropertyStatus[] = ["publicado", "reservado", "em_negociacao"];
 
-/** O dono pode enviar para aprovação a partir destes status (submit_property). */
-export const SUBMITTABLE_STATUSES: PropertyStatus[] = ["rascunho", "rejeitado", "pausado"];
+/**
+ * O dono pode enviar para aprovação a partir destes status. "pausado" (bloqueado
+ * pelo Master) não está aqui: só o Master desbloqueia (trigger da 0009).
+ */
+export const SUBMITTABLE_STATUSES: PropertyStatus[] = ["rascunho", "rejeitado"];
 
 /**
  * URL pública de uma mídia do bucket `property-media`. Só serve a cópia LIMPA:
